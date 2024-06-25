@@ -57,11 +57,11 @@ function ProcessRegistryKey {
 # List of VMware identifiers to rename
 $vmwareIDs = @(
     @{OldValue = "VMware"; NewValue = "GenericSoftware"},
-    @{OldValue = "vmci"; NewValue = "GenericDevice"},
-    @{OldValue = "vmhgfs"; NewValue = "GenericDevice"},
-    @{OldValue = "vmx86"; NewValue = "GenericDevice"},
-    @{OldValue = "vmusbmouse"; NewValue = "GenericDevice"},
-    @{OldValue = "vmvss"; NewValue = "GenericDevice"},
+    # @{OldValue = "vmci"; NewValue = "GenericDevice"},
+    # @{OldValue = "vmhgfs"; NewValue = "GenericDevice"},
+    # @{OldValue = "vmx86"; NewValue = "GenericDevice"},
+    # @{OldValue = "vmusbmouse"; NewValue = "GenericDevice"},
+    # @{OldValue = "vmvss"; NewValue = "GenericDevice"},
     @{OldValue = "VMTools"; NewValue = "GenericService"},
     @{OldValue = "VMnetAdapter"; NewValue = "GenericAdapter"},
     @{OldValue = "VMnetBridge"; NewValue = "GenericBridge"},
