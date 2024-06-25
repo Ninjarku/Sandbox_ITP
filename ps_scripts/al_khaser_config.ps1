@@ -27,21 +27,15 @@ function Rename-HardwareIDs {
     }
 }
 
+
 # List of virtual machine identifiers to rename
-$vmIDs = @(
-    @{OldID = "vbox"; NewID = "GenericDisk"},
-    @{OldID = "vmware"; NewID = "GenericDisk"},
-    @{OldID = "qemu"; NewID = "GenericDisk"},
-    @{OldID = "virtual"; NewID = "GenericDisk"}
-)
-
-
-
+$vmIDs = @('vbox','vmware','qemu','virtual')
+$NewID = "GenericDisk"
 
 
 # Rename each identifier
 foreach ($vmID in $vmIDs) {
-    Rename-HardwareIDs -OldID $vmID.OldID -NewID $vmID.NewID
+    Rename-HardwareIDs -OldID $vmID.OldID -NewID $NewID
 }
 
 Write-Host "Virtual machine identifiers have been renamed."
