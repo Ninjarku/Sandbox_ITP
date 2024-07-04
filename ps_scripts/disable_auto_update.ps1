@@ -1,3 +1,4 @@
+# Ref https://learn.microsoft.com/en-gb/archive/blogs/jamesone/managing-windows-update-with-powershell
 # From https://gist.github.com/mikebranstein/7e9169000a6555c195043e1755fbee7e
 # set the Windows Update service to "disabled"
 sc.exe config wuauserv start=disabled
