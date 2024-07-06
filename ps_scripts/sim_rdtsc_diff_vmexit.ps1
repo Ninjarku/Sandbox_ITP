@@ -1,32 +1,24 @@
-# Function to simulate VM exit detection based on timing differences
 function DetectVmExit {
-    $tsc1 = 0
-    $tsc2 = 0
-    $avg = 0
     $iterations = 10
+    $deltaThreshold = 1000  # Adjust this threshold as needed
 
+    # Measure execution time of a simple operation
+    $start = Get-Date
     for ($i = 0; $i -lt $iterations; $i++) {
-        $tsc1 = Get-Rdtsc
         $null = cpuid
-        $tsc2 = Get-Rdtsc
-
-        $avg += ($tsc2 - $tsc1)
     }
+    $end = Get-Date
 
-    $avg = $avg / $iterations
+    # Calculate average execution time
+    $avgTicks = ($end - $start).Ticks / $iterations
 
-    # Return true if average delta is less than 1000 and greater than 0
-    return ($avg -lt 1000 -and $avg -gt 0)
+    # Check if average execution time is below threshold
+    return ($avgTicks -lt $deltaThreshold)
 }
 
-# Helper function to simulate RDTSC (read timestamp counter)
-function Get-Rdtsc {
-    return [System.Diagnostics.Stopwatch]::GetTimestamp()
-}
-
-# Helper function to simulate CPUID instruction
+# Helper function to simulate a non-functional CPUID-like operation
 function cpuid {
-    # Perform some non-functional operation
+    # Perform a simple non-functional operation to simulate CPUID
     [System.Math]::Sqrt(2)
 }
 
@@ -34,7 +26,7 @@ function cpuid {
 $vmExitDetected = DetectVmExit
 
 if ($vmExitDetected) {
-    Write-Host "VM exit detected (RDTSC difference), potential sandbox or virtualized environment."
+    Write-Host "VM exit detected (timing difference), potential sandbox or virtualized environment."
 } else {
-    Write-Host "No VM exit detected (RDTSC difference), likely running on physical hardware."
+    Write-Host "No VM exit detected (timing difference), likely running on physical hardware."
 }
