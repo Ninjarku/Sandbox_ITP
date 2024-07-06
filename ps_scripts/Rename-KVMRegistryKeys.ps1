@@ -1,21 +1,27 @@
-# Function to rename blacklisted registry keys and associated executables
+# Function to rename blacklisted registry keys and associated executables if they exist
 function Rename-BlacklistedRegistryKeysAndExecutables {
     param (
         [string]$RegKey
     )
 
-    # Rename registry key
-    Rename-Item -Path "HKLM:\$RegKey" -NewName "Renamed_$RegKey" -Force
+    # Check if registry key exists
+    if (Test-Path "HKLM:\$RegKey") {
+        # Rename registry key
+        Rename-Item -Path "HKLM:\$RegKey" -NewName "Renamed_$RegKey" -Force
 
-    # Check if executable path exists in registry key
-    $key = Get-ItemProperty -Path "HKLM:\$RegKey" -ErrorAction SilentlyContinue
-    if ($key -ne $null -and $key.ImagePath -ne $null) {
-        $executablePath = $key.ImagePath
-        # Check if executable exists and rename it
-        if (Test-Path $executablePath -PathType Leaf) {
-            $execName = Split-Path $executablePath -Leaf
-            Rename-Item -Path $executablePath -NewName "Renamed_$execName" -Force
+        # Check if executable path exists in registry key
+        $key = Get-ItemProperty -Path "HKLM:\$RegKey" -ErrorAction SilentlyContinue
+        if ($key -ne $null -and $key.ImagePath -ne $null) {
+            $executablePath = $key.ImagePath
+            # Check if executable exists and rename it
+            if (Test-Path $executablePath -PathType Leaf) {
+                $execName = Split-Path $executablePath -Leaf
+                Rename-Item -Path $executablePath -NewName "Renamed_$execName" -Force
+            }
         }
+    }
+    else {
+        Write-Host "Registry key '$RegKey' does not exist."
     }
 }
 
@@ -30,9 +36,9 @@ $szKeys = @(
     "SYSTEM\ControlSet001\Services\netkvm"
 )
 
-# Rename each blacklisted registry key and associated executables
+# Rename each blacklisted registry key and associated executables if they exist
 foreach ($key in $szKeys) {
     Rename-BlacklistedRegistryKeysAndExecutables -RegKey $key
 }
 
-Write-Host "Registry keys and associated executables have been renamed."
+Write-Host "Registry keys and associated executables have been renamed where possible."
