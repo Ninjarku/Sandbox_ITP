@@ -1,31 +1,37 @@
-# Function to simulate RDTSC difference for VM exit detection
-function CounterRdtscDiffVmexit {
-    # Initialize variables
+# Function to simulate VM exit detection based on timing differences
+function DetectVmExit {
     $tsc1 = 0
     $tsc2 = 0
     $avg = 0
-    $cpuInfo = New-Object int[] 4
+    $iterations = 10
 
-    # Try 10 times to account for fluctuations
-    for ($i = 0; $i -lt 10; $i++) {
-        # Simulate RDTSC and CPUID
-        $tsc1 = [System.Diagnostics.Stopwatch]::GetTimestamp()
-        [System.Runtime.Intrinsics.X86.X86Base]::Cpuid([ref]$cpuInfo, 0)
-        $tsc2 = [System.Diagnostics.Stopwatch]::GetTimestamp()
+    for ($i = 0; $i -lt $iterations; $i++) {
+        $tsc1 = Get-Rdtsc
+        $null = cpuid
+        $tsc2 = Get-Rdtsc
 
-        # Calculate delta of RDTSC
         $avg += ($tsc2 - $tsc1)
     }
 
-    # Calculate average delta
-    $avg = $avg / 10
+    $avg = $avg / $iterations
 
-    # Return result based on average delta condition
-    return ($avg -lt 1000 -and $avg -gt 0) -eq $true
+    # Return true if average delta is less than 1000 and greater than 0
+    return ($avg -lt 1000 -and $avg -gt 0)
+}
+
+# Helper function to simulate RDTSC (read timestamp counter)
+function Get-Rdtsc {
+    return [System.Diagnostics.Stopwatch]::GetTimestamp()
+}
+
+# Helper function to simulate CPUID instruction
+function cpuid {
+    # Perform some non-functional operation
+    [System.Math]::Sqrt(2)
 }
 
 # Example usage:
-$vmExitDetected = CounterRdtscDiffVmexit
+$vmExitDetected = DetectVmExit
 
 if ($vmExitDetected) {
     Write-Host "VM exit detected (RDTSC difference), potential sandbox or virtualized environment."
