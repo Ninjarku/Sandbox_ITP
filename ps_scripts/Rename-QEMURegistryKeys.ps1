@@ -8,6 +8,7 @@ function Rename-QEMURegistryKeys {
     # List of registry paths to search for QEMU-related keys and values
     $regPaths = @(
         "HKLM:\SOFTWARE\QEMU",
+        "HKLM:\SOFTWARE\RedHat",
         "HKLM:\SYSTEM\CurrentControlSet\Services",
         "HKCU:\Software\QEMU"
     )
@@ -26,6 +27,31 @@ function Rename-QEMURegistryKeys {
                 ProcessRegistryKey $childSubKey.PSPath $OldValue $NewValue
             }
         }
+    }
+}
+
+# Function to process a single registry key
+function ProcessRegistryKey {
+    param (
+        [string]$keyPath,
+        [string]$OldValue,
+        [string]$NewValue
+    )
+
+    try {
+        # Get the property values
+        $values = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
+
+        foreach ($value in $values.PSObject.Properties) {
+            if ($value.Value -is [string] -and $value.Value -match [regex]::Escape($OldValue)) {
+                # Replace old value with new value
+                $newValue = $value.Value -replace [regex]::Escape($OldValue), $NewValue
+                Set-ItemProperty -Path $keyPath -Name $value.Name -Value $newValue -ErrorAction SilentlyContinue
+                Write-Host "Renamed $OldValue to $NewValue in $($keyPath)"
+            }
+        }
+    } catch {
+        Write-Host "Failed to access $($keyPath): $_"
     }
 }
 
