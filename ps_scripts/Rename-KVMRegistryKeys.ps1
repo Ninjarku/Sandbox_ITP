@@ -78,7 +78,7 @@ $szKeys = @(
 
 # Rename each blacklisted registry key and associated executables if they exist
 foreach ($key in $szKeys) {
-    Rename-QEMURegistryKeys -OldValue $key.OldValue -NewValue $key.NewValue
+    Rename-BlacklistedRegistryKeysAndExecutables -OldValue $key.OldValue -NewValue $key.NewValue
 }
 
 Write-Host "Registry keys and associated executables have been renamed where possible."
