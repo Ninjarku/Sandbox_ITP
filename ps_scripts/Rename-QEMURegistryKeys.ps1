@@ -9,7 +9,7 @@ function Rename-QEMURegistryKeys {
     $regPaths = @(
         "HKLM:\SOFTWARE\QEMU",
         "HKLM:\SOFTWARE\RedHat",
-        "HKLM:\SYSTEM\CurrentControlSet\Services",
+        "HKLM:\SYSTEM\ControlSet001\Services",
         "HKCU:\Software\QEMU"
     )
 
