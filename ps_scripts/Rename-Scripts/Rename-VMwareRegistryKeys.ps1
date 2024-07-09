@@ -1,15 +1,9 @@
-# Function to rename blacklisted registry keys and associated executables if they exist
-function Rename-BlacklistedRegistryKeysAndExecutables {
+# Function to rename VMware registry keys and values
+function Rename-VMwareRegistryKeys () {
     param (
         [string]$OldValue,
-        [string]$NewValue
-    )
-
-    # List of registry paths to search for QEMU-related keys and values
-    $regPaths = @(
-        # "HKLM:\SOFTWARE\kvm",
-        "HKLM:\SYSTEM\ControlSet001\Services"
-        # "HKCU:\Software\kvm"
+        [string]$NewValue,
+        [array]$regPaths
     )
 
     foreach ($regPath in $regPaths) {
@@ -54,21 +48,34 @@ function ProcessRegistryKey {
     }
 }
 
-# List of blacklisted registry keys
-$szKeys = @(
-    @{OldValue = "vioscsi"; NewValue = "GenericSoftware"},
-    @{OldValue = "viostor"; NewValue = "GenericSystem"},
-    @{OldValue = "VirtIO-FS Service"; NewValue = "GenericService"},
-    @{OldValue = "VirtioSerial"; NewValue = "GenericSoftware"},
-    @{OldValue = "BALLOON"; NewValue = "GenericSoftware"},
-    @{OldValue = "BalloonService"; NewValue = "GenericSoftware"},
-    @{OldValue = "netkvm"; NewValue = "GenericSoftware"}
-)
+# Function to rename the KVM keys 
+function RenameVMwareKeys{
+    # List of VMware identifiers to rename
+    $vmwareIDs = @(
+        @{OldValue = "VMware"; NewValue = "GenericSoftware"},
+        # @{OldValue = "vmci"; NewValue = "GenericDevice"},
+        # @{OldValue = "vmhgfs"; NewValue = "GenericDevice"},
+        # @{OldValue = "vmx86"; NewValue = "GenericDevice"},
+        # @{OldValue = "vmusbmouse"; NewValue = "GenericDevice"},
+        # @{OldValue = "vmvss"; NewValue = "GenericDevice"},
+        @{OldValue = "VMTools"; NewValue = "GenericService"},
+        @{OldValue = "VMnetAdapter"; NewValue = "GenericAdapter"},
+        @{OldValue = "VMnetBridge"; NewValue = "GenericBridge"},
+        @{OldValue = "VMnetDHCP"; NewValue = "GenericDHCP"},
+        @{OldValue = "VMnetNat"; NewValue = "GenericNAT"}
+    )
+    
+    # List of registry paths to search for VMware-related keys and values
+    $regPaths = @(
+        "HKLM:\SOFTWARE\VMware, Inc.",
+        "HKLM:\SYSTEM\CurrentControlSet\Services",
+        "HKCU:\Software\VMware, Inc."
+    )
 
+    # Rename each identifier
+    foreach ($vmwareID in $vmwareIDs) {
+        Rename-VMwareRegistryKeys -OldValue $vmwareID.OldValue -NewValue $vmwareID.NewValue -regPaths $regPaths
+    }
 
-# Rename each blacklisted registry key and associated executables if they exist
-foreach ($key in $szKeys) {
-    Rename-BlacklistedRegistryKeysAndExecutables -OldValue $key.OldValue -NewValue $key.NewValue
+    Write-Host "VMware identifiers have been renamed."
 }
-
-Write-Host "Registry keys and associated executables have been renamed where possible."

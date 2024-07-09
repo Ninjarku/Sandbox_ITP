@@ -2,16 +2,10 @@
 function Rename-QEMURegistryKeys {
     param (
         [string]$OldValue,
-        [string]$NewValue
+        [string]$NewValue,
+        [string]$regPaths
     )
 
-    # List of registry paths to search for QEMU-related keys and values
-    $regPaths = @(
-        "HKLM:\SOFTWARE\QEMU",
-        "HKLM:\SOFTWARE\RedHat",
-        "HKLM:\SYSTEM\ControlSet001\Services",
-        "HKCU:\Software\QEMU"
-    )
 
     foreach ($regPath in $regPaths) {
         # Get all subkeys non-recursively
@@ -80,19 +74,31 @@ function ProcessRegistryKey {
     }
 }
 
-# List of QEMU identifiers to rename
-$qemuIDs = @(
-    @{OldValue = "QEMU"; NewValue = "GenericSoftware"},
-    @{OldValue = "QEMUSystem"; NewValue = "GenericSystem"},
-    @{OldValue = "QEMUService"; NewValue = "GenericService"}
-)
+function RenameQEMUKeys{
+    # List of QEMU identifiers to rename
+    $qemuIDs = @(
+        @{OldValue = "QEMU"; NewValue = "GenericSoftware"},
+        @{OldValue = "QEMUSystem"; NewValue = "GenericSystem"},
+        @{OldValue = "QEMUService"; NewValue = "GenericService"}
+    )
 
-# Rename each identifier
-foreach ($qemuID in $qemuIDs) {
-    Rename-QEMURegistryKeys -OldValue $qemuID.OldValue -NewValue $qemuID.NewValue
+    # List of registry paths to search for QEMU-related keys and values
+    $regPaths = @(
+        "HKLM:\SOFTWARE\QEMU",
+        "HKLM:\SOFTWARE\RedHat",
+        "HKLM:\SYSTEM\ControlSet001\Services",
+        "HKCU:\Software\QEMU"
+    )
+
+    # Rename each identifier
+    foreach ($qemuID in $qemuIDs) {
+        Rename-QEMURegistryKeys -OldValue $qemuID.OldValue -NewValue $qemuID.NewValue -regPaths $regPaths
+    }
+
+    Write-Host "QEMU identifiers have been renamed."
 }
 
-Write-Host "QEMU identifiers have been renamed."
+
 
 # Restart the computer for it to affect the RTDSC trick that causes vm exit
-shutdown /r /t 0
+# shutdown /r /t 0
