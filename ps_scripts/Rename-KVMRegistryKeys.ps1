@@ -7,9 +7,9 @@ function Rename-BlacklistedRegistryKeysAndExecutables {
 
     # List of registry paths to search for QEMU-related keys and values
     $regPaths = @(
-        "HKLM:\SOFTWARE\kvm",
-        "HKLM:\SYSTEM\CurrentControlSet\Services",
-        "HKCU:\Software\kvm"
+        # "HKLM:\SOFTWARE\kvm",
+        "HKLM:\SYSTEM\ControlSet001\Services"
+        # "HKCU:\Software\kvm"
     )
 
     foreach ($regPath in $regPaths) {
@@ -55,16 +55,6 @@ function ProcessRegistryKey {
 }
 
 # List of blacklisted registry keys
-$kvmIDs = @(
-    "SYSTEM\ControlSet001\Services\vioscsi",
-    "SYSTEM\ControlSet001\Services\viostor",
-    "SYSTEM\ControlSet001\Services\VirtIO-FS Service",
-    "SYSTEM\ControlSet001\Services\VirtioSerial",
-    "SYSTEM\ControlSet001\Services\BALLOON",
-    "SYSTEM\ControlSet001\Services\BalloonService",
-    "SYSTEM\ControlSet001\Services\netkvm"
-)
-
 $szKeys = @(
     @{OldValue = "vioscsi"; NewValue = "GenericSoftware"},
     @{OldValue = "viostor"; NewValue = "GenericSystem"},

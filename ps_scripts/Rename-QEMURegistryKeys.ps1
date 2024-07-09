@@ -93,3 +93,6 @@ foreach ($qemuID in $qemuIDs) {
 }
 
 Write-Host "QEMU identifiers have been renamed."
+
+# Restart the computer for it to affect the RTDSC trick that causes vm exit
+shutdown /r /t 0
