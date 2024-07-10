@@ -160,9 +160,9 @@ function RenameVMwareKeys{
 }
 
 function Rename-AllKeys{
-    RenameQEMUKeys
-    RenameKVMKeys
-    RenameVMwareKeys
+    RenameVMwareKeys;
+    RenameQEMUKeys;
+    RenameKVMKeys;
 }
 
 Rename-AllKeys
