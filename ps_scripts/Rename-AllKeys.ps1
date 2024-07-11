@@ -148,7 +148,9 @@ function RenameVMwareKeys{
     $regPaths = @(
         "HKLM:\SOFTWARE\VMware, Inc.",
         "HKLM:\SYSTEM\CurrentControlSet\Services",
+        "HKLM:\SYSTEM\ControlSet001\Services",
         "HKCU:\Software\VMware, Inc."
+        
     )
 
     # Rename each identifier
