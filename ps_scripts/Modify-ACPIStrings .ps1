@@ -1,6 +1,9 @@
 # Function to modify ACPI table strings
+
+
+
 function Modify-ACPIStrings {
-    $acpiTables = Get-ACPI # Custom function to retrieve ACPI tables, you'll need to implement this part
+    $acpiTables = Get-ACPI
 
     foreach ($table in $acpiTables) {
         if ($table.Content -match "BOCHS|BXPC") {
