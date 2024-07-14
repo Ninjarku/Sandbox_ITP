@@ -35,12 +35,14 @@ function Replace-RegistryStrings {
 
 # List of root keys to start with
 $rootKeys = @(
-    "HKLM:\",
-    "HKCU:\"
-    # "HKLM:\SOFTWARE",
-    # "HKCU:\SOFTWARE",
-    # "HKLM:\SYSTEM",
-    # "HKCU:\SYSTEM"
+    # "HKLM:\",
+    # "HKCU:\"
+    "HKLM:\SOFTWARE",
+    "HKCU:\SOFTWARE",
+    "HKLM:\SYSTEM",
+    "HKCU:\SYSTEM",
+    "HKLM:\HARDWARE"
+
 )
 
 # Start the replacement process for each root key
