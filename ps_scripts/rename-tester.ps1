@@ -19,7 +19,7 @@ function Replace-RegistryStrings {
                 if ($currentValue -match "(?i)$searchString") {
                     $newValue = $currentValue -replace "(?i)$searchString", $replacementString
                     Set-ItemProperty -Path $keyPath -Name $value -Value $newValue
-                    Write-Output "Updated value in $keyPath: $value"
+                    Write-Output "Updated value in $keyPath : $value"
                 }
             }
         }
@@ -29,16 +29,18 @@ function Replace-RegistryStrings {
             Replace-RegistryStrings "$keyPath\$subKey"
         }
     } catch {
-        Write-Output "Error accessing $keyPath: $_"
+        Write-Output "Error accessing $keyPath : $_"
     }
 }
 
 # List of root keys to start with
 $rootKeys = @(
-    "HKLM:\SOFTWARE",
-    "HKCU:\SOFTWARE",
-    "HKLM:\SYSTEM",
-    "HKCU:\SYSTEM"
+    "HKLM:\",
+    "HKCU:\"
+    # "HKLM:\SOFTWARE",
+    # "HKCU:\SOFTWARE",
+    # "HKLM:\SYSTEM",
+    # "HKCU:\SYSTEM"
 )
 
 # Start the replacement process for each root key
