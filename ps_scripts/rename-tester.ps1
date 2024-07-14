@@ -3,6 +3,7 @@ $searchString = "vmware"
 $replacementString = "windows"
 
 # Function to recursively process registry keys
+# Function to process registry keys
 function Process-RegistryKey {
     param (
         [string]$keyPath
@@ -25,11 +26,13 @@ function Process-RegistryKey {
         }
 
         # Recursively process subkeys
-        $subKeys = $key.GetSubKeyNames() | ForEach-Object { "$keyPath\$_" }
-        $subKeys | ForEach-Object -Parallel {
-            param ($subKey)
-            Process-RegistryKey -keyPath $subKey
-        } -ThrottleLimit 10
+        foreach ($subKey in $key.GetSubKeyNames()) {
+            $subKeyPath = "$keyPath\$subKey"
+            Start-Job -ScriptBlock {
+                param($subKeyPath, $searchString, $replacementString)
+                Process-RegistryKey -keyPath $subKeyPath -searchString $searchString -replacementString $replacementString
+            } -ArgumentList $subKeyPath, $searchString, $replacementString | Out-Null
+        }
     } catch {
         Write-Output "Error accessing $keyPath : $_"
     }
@@ -48,7 +51,12 @@ $rootKeys = @(
 )
 
 # Start the replacement process for each root key
-$rootKeys | ForEach-Object -Parallel {
-    param ($rootKey)
-    Process-RegistryKey -keyPath $rootKey
-} -ThrottleLimit 10
+foreach ($rootKey in $rootKeys) {
+    Start-Job -ScriptBlock {
+        param($rootKey, $searchString, $replacementString)
+        Process-RegistryKey -keyPath $rootKey -searchString $searchString -replacementString $replacementString
+    } -ArgumentList $rootKey, $searchString, $replacementString | Out-Null
+}
+
+# Wait for all jobs to complete
+Get-Job | Wait-Job
