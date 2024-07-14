@@ -3,6 +3,7 @@ $searchString = "vmware"
 $replacementString = "windows"
 
 # Function to recursively process registry keys
+$functionScript = @"
 function Replace-RegistryStrings {
     param (
         [string]$keyPath,
@@ -34,6 +35,8 @@ function Replace-RegistryStrings {
         Write-Output "Error accessing $keyPath : $_"
     }
 }
+"@
+
 
 # List of root keys to start with
 $rootKeys = @(
@@ -50,9 +53,14 @@ $rootKeys = @(
 # Start the replacement process for each root key
 foreach ($rootKey in $rootKeys) {
     Start-Job -ScriptBlock {
-        param($rootKey, $searchString, $replacementString)
+        param($rootKey, $searchString, $replacementString, $functionScript)
+
+        # Define the function within the job
+        Invoke-Expression $functionScript
+
+        # Call the function
         Replace-RegistryStrings -keyPath $rootKey -searchString $searchString -replacementString $replacementString
-    } -ArgumentList $rootKey, $searchString, $replacementString | Out-Null
+    } -ArgumentList $rootKey, $searchString, $replacementString, $functionScript | Out-Null
 }
 
 # Wait for all jobs to complete
