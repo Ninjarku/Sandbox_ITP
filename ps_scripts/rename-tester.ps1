@@ -3,11 +3,11 @@ $searchString = "vmware"
 $replacementString = "windows"
 
 # Function to recursively process registry keys
-function Replace-RegistryStrings {
+function Process-RegistryKey {
     param (
         [string]$keyPath
     )
-    
+
     try {
         # Get the registry key
         $key = Get-Item -Path $keyPath -ErrorAction Stop
@@ -25,9 +25,11 @@ function Replace-RegistryStrings {
         }
 
         # Recursively process subkeys
-        foreach ($subKey in $key.GetSubKeyNames()) {
-            Replace-RegistryStrings "$keyPath\$subKey"
-        }
+        $subKeys = $key.GetSubKeyNames() | ForEach-Object { "$keyPath\$_" }
+        $subKeys | ForEach-Object -Parallel {
+            param ($subKey)
+            Process-RegistryKey -keyPath $subKey
+        } -ThrottleLimit 10
     } catch {
         Write-Output "Error accessing $keyPath : $_"
     }
@@ -46,6 +48,7 @@ $rootKeys = @(
 )
 
 # Start the replacement process for each root key
-foreach ($rootKey in $rootKeys) {
-    Replace-RegistryStrings $rootKey
-}
+$rootKeys | ForEach-Object -Parallel {
+    param ($rootKey)
+    Process-RegistryKey -keyPath $rootKey
+} -ThrottleLimit 10
