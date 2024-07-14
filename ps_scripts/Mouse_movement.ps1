@@ -19,7 +19,10 @@ function Move_Mouse {
     Start-Sleep -Seconds $sleepSeconds
 }
 
-# Main loop to simulate user activity (mouse movement)
-while ($true) {
+# Specify how many times to move the mouse
+$numberOfMovements = 1000  # Adjust as needed
+
+# Perform mouse movements
+for ($i = 0; $i -lt $numberOfMovements; $i++) {
     Move_Mouse
 }
