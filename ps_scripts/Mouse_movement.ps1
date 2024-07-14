@@ -1,6 +1,3 @@
-# Constants for mouse events
-$MOUSE_EVENT = 0x0001
-
 # Function to move the mouse with random offsets and sleep duration
 function Move_Mouse {
     param (
@@ -10,17 +7,18 @@ function Move_Mouse {
         [int]$maxSleep = 5
     )
 
+    $currentCursorPosition = [System.Windows.Forms.Cursor]::Position
     $xOffset = Get-Random -Minimum $minOffset -Maximum $maxOffset
     $yOffset = Get-Random -Minimum $minOffset -Maximum $maxOffset
-
-    [UserInput]::mouse_event($MOUSE_EVENT, $xOffset, $yOffset, 0, 0)
+    $newCursorPosition = New-Object System.Drawing.Point(($currentCursorPosition.X + $xOffset), ($currentCursorPosition.Y + $yOffset))
+    [System.Windows.Forms.Cursor]::Position = $newCursorPosition
 
     $sleepSeconds = Get-Random -Minimum $minSleep -Maximum $maxSleep
     Start-Sleep -Seconds $sleepSeconds
 }
 
 # Specify how many times to move the mouse
-$numberOfMovements = 1000  # Adjust as needed
+$numberOfMovements = 10  # Adjust as needed
 
 # Perform mouse movements
 for ($i = 0; $i -lt $numberOfMovements; $i++) {
