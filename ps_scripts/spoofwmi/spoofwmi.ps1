@@ -16,6 +16,38 @@ function Spoof_Bios {
     $newBios.Put()
 }
 
+function Spoof_Processor {
+    $processorHashtable = @{}
+    $oldProcessorOutput = Get-WmiObject -Class Win32_Processor | Where-Object { $_.DeviceID -eq "CPU0" } | Select-Object -Property *
+    
+    foreach ($property in $oldProcessorOutput.Properties) {
+        $processorHashtable[$property.Name] = $property.Value
+    }
+
+    if ($processorHashtable["ProcessorID"] -eq $null) {
+        $processorHashtable["ProcessorID"] = "1F8BFBFF000673F4"
+    }
+    
+    if ($processorHashtable["NumberOfCores"] -le 2) {
+        $processorHashtable["NumberOfCores"] = 4
+        $processorHashtable["NumberOfEnabledCore"] = 4
+        $processorHashtable["NumberOfLogicalProcessors"] = 4
+    }
+
+    $processorHashtable["DeviceID"] = "CPU0"
+    $processorHashtable["VirtualizationFirmwareEnabled"] = "False"
+    $processorHashtable["VMMonitorModeExtensions"] = "False"
+    $processorHashtable["ThreadCount"] = "4"
+
+    Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "processor.mof") -NoNewWindow -Wait
+    $newProcessorClass = ([WMIClass]"\\.\root\cimv2:Win32_Processor").CreateInstance()
+
+    foreach ($key in $processorHashtable.Keys) {
+        $newProcessorClass.$key = $processorHashtable[$key]
+    }
+    $newProcessorClass.Put()
+}
+
 function Spoof_VideoController {
     # Copies all the other values of the original Win32_VideoController
     # Tries to maintain most of the original Win32_Videocontroller
@@ -62,13 +94,38 @@ function Spoof_ComputerSystem {
     $newComputerSystem.Put()
 }
 
+function Spoof_LogicalDisk {
+    $logicalDiskHashtable = @{}
+    $oldLogicalDisk = Get-WmiObject -Class Win32_LogicalDisk | Select-Object -First 1 | Select-Object -Property *
+    
+    foreach ($property in $oldLogicalDisk.Properties) {
+        $logicalDiskHashtable[$property.Name] = $property.Value
+    }
+
+    if ($logicalDiskHashtable["Size"] -lt 64424509440) {
+        $logicalDiskHashtable["Size"] = 85899345920
+    }
+        
+    Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "logicaldisk.mof") -NoNewWindow -Wait
+    $newLogicalDisk = ([WMIClass]"\\.\root\cimv2:Win32_LogicalDisk").CreateInstance()
+
+    foreach ($key in $logicalDiskHashtable.Keys) {
+        $newLogicalDisk.$key = $logicalDiskHashtable[$key]
+    }
+    
+    $newLogicalDisk.Put()
+} 
+
 function Spoof_DiskDrive {
-    # Currently only spoofs the first drive
-    # May edit if Sandbox is found to have multiple drives
     $oldDiskDrive = Get-WmiObject -Class Win32_DiskDrive | where-Object { $_.DeviceID -eq "\\.\PHYSICALDRIVE0" }
     $partitions = $oldDiskDrive.Partitions
     $deviceID = $oldDiskDrive.DeviceID
-    $size = $oldDiskDrive.Size
+    if ($oldDiskDrive.Size -ge 64424509440) { #60GB in Bytes
+        $size = $oldDiskDrive.Size
+    }
+    else {
+        $size = 85899345920 # 80GB in Bytes
+    }
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "diskdrive.mof") -NoNewWindow -Wait
     $newDiskDrive = ([WMIClass]"\\.\root\cimv2:Win32_DiskDrive").CreateInstance()
@@ -128,6 +185,8 @@ function main {
     Spoof_ComputerSystemProduct
     Spoof_SystemEnclosure
     Spoof_Fan
+    Spoof_Processor
+    Spoof_LogicalDisk
 }
 
 main
