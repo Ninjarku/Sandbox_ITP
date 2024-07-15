@@ -87,6 +87,7 @@ function RenameQEMUKeys{
         "HKLM:\SOFTWARE\QEMU",
         "HKLM:\SOFTWARE\RedHat",
         "HKLM:\SYSTEM\ControlSet001\Services",
+        "HKLM:\SYSTEM\ControlSet001\Control\SystemInformation",
         "HKCU:\Software\QEMU"
     )
 
