@@ -48,30 +48,6 @@ function ProcessRegistryKey {
     }
 }
 
-# Function to process a single registry key
-function ProcessRegistryKey {
-    param (
-        [string]$keyPath,
-        [string]$OldValue,
-        [string]$NewValue
-    )
-
-    try {
-        # Get the property values
-        $values = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
-
-        foreach ($value in $values.PSObject.Properties) {
-            if ($value.Value -is [string] -and $value.Value -match [regex]::Escape($OldValue)) {
-                # Replace old value with new value
-                $newValue = $value.Value -replace [regex]::Escape($OldValue), $NewValue
-                Set-ItemProperty -Path $keyPath -Name $value.Name -Value $newValue -ErrorAction SilentlyContinue
-                Write-Host "Renamed $OldValue to $NewValue in $($keyPath)"
-            }
-        }
-    } catch {
-        Write-Host "Failed to access $($keyPath): $_"
-    }
-}
 
 function RenameQEMUKeys{
     # List of QEMU identifiers to rename
@@ -86,6 +62,7 @@ function RenameQEMUKeys{
         "HKLM:\SOFTWARE\QEMU",
         "HKLM:\SOFTWARE\RedHat",
         "HKLM:\SYSTEM\ControlSet001\Services",
+        "HKLM:\SYSTEM\ControlSet001\Control\SystemInformation",
         "HKCU:\Software\QEMU"
     )
 
@@ -150,7 +127,7 @@ function RenameVMwareKeys{
         "HKLM:\SYSTEM\CurrentControlSet\Services",
         "HKLM:\SYSTEM\ControlSet001\Services",
         "HKLM:\SYSTEM\ControlSet001\Control\SystemInformation",
-        "HKCU:\Software\VMware, Inc."
+        "HKCU:\Software\VMware"
     )
 
     # Rename each identifier
