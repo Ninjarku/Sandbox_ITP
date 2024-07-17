@@ -33,34 +33,25 @@ function ProcessRegistryKey {
 
     try {
         # Get the property values
-        $values = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
+        $value = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
 
-        foreach ($value in $values.PSObject.Properties) {
-            if ($value.Value -is [string] -and $value.Value -match [regex]::Escape($OldValue)) {
-                # Replace old value with new value
-                $newValue = $value.Value -replace [regex]::Escape($OldValue), $NewValue
-                Set-ItemProperty -Path $keyPath -Name $value.Name -Value $newValue -ErrorAction SilentlyContinue
-                Write-Host "Renamed value $OldValue to $NewValue in $($keyPath)"
-            }
+        # foreach ($value in $values.PSObject.Properties) {
+            # if ($value.Value -is [string] -and $value.Value -match [regex]::Escape($OldValue)) {
+        if ($value.SystemProductName -is [string] -and $value.SystemProductName -match [regex]::Escape($OldValue)) {
+            # Replace old value with new value
+            $newValue = $value.SystemProductName -replace [regex]::Escape($OldValue), $NewValue
+            Set-ItemProperty -Path $keyPath -Name $value.SystemProductName -Value $newValue -ErrorAction SilentlyContinue
+            Write-Host "Renamed value $OldValue to $NewValue in $($keyPath)"
         }
+        if ($value.SystemManufacturer -is [string] -and $value.SystemManufacturer -match [regex]::Escape($OldValue)) {
+            # Replace old value with new value
+            $newValue = $value.Value -replace [regex]::Escape($OldValue), $NewValue
+            Set-ItemProperty -Path $keyPath -Name $value.SystemManufacturer -Value $newValue -ErrorAction SilentlyContinue
+            Write-Host "Renamed value $OldValue to $NewValue in $($keyPath)"
+        }
+        # }
     } catch {
         Write-Host "Failed to access $($keyPath): $_"
-    }
-
-    try {
-        # Get the property data
-        $keyName = Get-Item -Path $keyPath -ErrorAction SilentlyContinue
-
-        foreach ($property in $keyName.PSObject.Properties) {
-            if ($property.Value -is [string] -and $property.Value -match [regex]::Escape($OldValue)) {
-                # Replace old data with new data
-                $newData = $property.Value -replace [regex]::Escape($OldValue), $NewValue
-                Set-ItemProperty -Path $keyPath -Name $property.Name -Value $newData -ErrorAction SilentlyContinue
-                Write-Host "Renamed data $OldValue to $NewValue in $($keyPath)"
-            }
-        }
-    } catch {
-        Write-Host "Failed to access data in $($keyPath): $_"
     }
 }
 
