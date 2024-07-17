@@ -33,25 +33,35 @@ function ProcessRegistryKey {
 
     try {
         # Get the property values
-        $value = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
+        $values = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
 
-        # foreach ($value in $values.PSObject.Properties) {
-            # if ($value.Value -is [string] -and $value.Value -match [regex]::Escape($OldValue)) {
-        if ($value.SystemProductName -is [string] -and $value.SystemProductName -match [regex]::Escape($OldValue)) {
-            # Replace old value with new value
-            $newValue = $value.SystemProductName -replace [regex]::Escape($OldValue), $NewValue
-            Set-ItemProperty -Path $keyPath -Name $value.SystemProductName -Value $newValue -ErrorAction SilentlyContinue
-            Write-Host "Renamed value $OldValue to $NewValue in $($keyPath)"
+        foreach ($value in $values.PSObject.Properties) {
+            if ($value.Value -is [string] -and $value.Value -match [regex]::Escape($OldValue)) {
+                # Replace old value with new value
+                $newValue = $value.Value -replace [regex]::Escape($OldValue), $NewValue
+                Set-ItemProperty -Path $keyPath -Name $value.Name -Value $newValue -ErrorAction SilentlyContinue
+                Write-Host "Renamed value $OldValue to $NewValue in $($keyPath)"
+            }
         }
-        if ($value.SystemManufacturer -is [string] -and $value.SystemManufacturer -match [regex]::Escape($OldValue)) {
-            # Replace old value with new value
-            $newValue = $value.Value -replace [regex]::Escape($OldValue), $NewValue
-            Set-ItemProperty -Path $keyPath -Name $value.SystemManufacturer -Value $newValue -ErrorAction SilentlyContinue
-            Write-Host "Renamed value $OldValue to $NewValue in $($keyPath)"
-        }
-        # }
     } catch {
         Write-Host "Failed to access $($keyPath): $_"
+    }
+
+    try {
+        # Get the specific properties of interest
+        $propertiesOfInterest = @("SystemManufacturer", "SystemProductName")
+        $keyProps = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
+
+        foreach ($prop in $propertiesOfInterest) {
+            if ($keyProps.$prop -is [string] -and $keyProps.$prop -match [regex]::Escape($OldValue)) {
+                # Replace old data with new data
+                $newData = $keyProps.$prop -replace [regex]::Escape($OldValue), $NewValue
+                Set-ItemProperty -Path $keyPath -Name $prop -Value $newData -ErrorAction SilentlyContinue
+                Write-Host "Renamed data in $prop from $OldValue to $NewValue in $($keyPath)"
+            }
+        }
+    } catch {
+        Write-Host "Failed to access data in $($keyPath): $_"
     }
 }
 
