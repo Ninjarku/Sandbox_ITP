@@ -20,8 +20,8 @@ function ProcessRegistryKey {
     )
 
     try {
-        # Get the specific properties of interest
-        $propertiesOfInterest = @("SystemManufacturer", "SystemProductName")
+        # Get the specific properties of interest 
+        $propertiesOfInterest = @("SystemManufacturer", "SystemProductName", "SystemBiosVersion", "Identifier")
         $keyProps = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
         
         foreach ($prop in $propertiesOfInterest) {
@@ -65,11 +65,13 @@ function RenameQEMUKeys{
 
     # List of registry paths to search for QEMU-related keys and values
     $regPaths = @(
-        "HKLM:\SOFTWARE\QEMU",
-        "HKLM:\SOFTWARE\RedHat",
-        "HKLM:\SYSTEM\ControlSet001\Services",
-        "HKLM:\SYSTEM\ControlSet001\Control\SystemInformation",
-        "HKCU:\Software\QEMU"
+        # "HKLM:\SOFTWARE\QEMU",
+        # "HKLM:\SOFTWARE\RedHat",
+        # "HKLM:\SYSTEM\ControlSet001\Services",
+        # "HKLM:\SYSTEM\ControlSet001\Control\SystemInformation",
+        # "HKCU:\Software\QEMU"
+        "HKLM:\HARDWARE\Description\System",
+        "HKLM:\HARDWARE\DEVICEMAP\Scsi\Scsi Port 0\Scsi Bus 0\Target Id 0\Logical Unit Id 0"
     )
 
     # Rename each identifier
