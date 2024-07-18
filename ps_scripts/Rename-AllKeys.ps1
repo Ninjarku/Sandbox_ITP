@@ -7,19 +7,20 @@ function Rename-RegistryKeys {
     )
 
     foreach ($regPath in $regPaths) {
+        ProcessRegistryKey $childSubKey.PSPath $OldValue $NewValue
+
         # Get all subkeys non-recursively
-        $subKeys = Get-ChildItem -Path $regPath -ErrorAction SilentlyContinue
+        # $subKeys = Get-ChildItem -Path $regPath -ErrorAction SilentlyContinue
 
-        foreach ($subKey in $subKeys) {
+        # foreach ($subKey in $subKeys) {
             # Process each subkey without recursion
-            ProcessRegistryKey $subKey.PSPath $OldValue $NewValue
+            # ProcessRegistryKey $subKey.PSPath $OldValue $NewValue
 
-            # Get and process subkeys one level deep
-            $childSubKeys = Get-ChildItem -Path $subKey.PSPath -ErrorAction SilentlyContinue
-            foreach ($childSubKey in $childSubKeys) {
-                ProcessRegistryKey $childSubKey.PSPath $OldValue $NewValue
-            }
-        }
+            # # Get and process subkeys one level deep
+            # $childSubKeys = Get-ChildItem -Path $subKey.PSPath -ErrorAction SilentlyContinue
+            # foreach ($childSubKey in $childSubKeys) {
+            # }
+        # }
     }
 }
 
