@@ -1,15 +1,9 @@
-# Function to rename QEMU registry keys and values
-function Rename-QEMURegistryKeys {
+# Function to rename blacklisted registry keys and associated executables if they exist
+function Rename-BlacklistedRegistryKeysAndExecutables {
     param (
         [string]$OldValue,
-        [string]$NewValue
-    )
-
-    # List of registry paths to search for QEMU-related keys and values
-    $regPaths = @(
-        "HKLM:\SOFTWARE\QEMU",
-        "HKLM:\SYSTEM\CurrentControlSet\Services",
-        "HKCU:\Software\QEMU"
+        [string]$NewValue,
+        [array]$regPaths
     )
 
     foreach ($regPath in $regPaths) {
@@ -54,16 +48,30 @@ function ProcessRegistryKey {
     }
 }
 
-# List of QEMU identifiers to rename
-$qemuIDs = @(
-    @{OldValue = "QEMU"; NewValue = "GenericSoftware"},
-    @{OldValue = "QEMUSystem"; NewValue = "GenericSystem"},
-    @{OldValue = "QEMUService"; NewValue = "GenericService"}
-)
+# Function to rename the KVM keys 
+function RenameKVMKeys{
+    # List of blacklisted registry keys
+    $szKeys = @(
+        @{OldValue = "vioscsi"; NewValue = "GenericSoftware"},
+        @{OldValue = "viostor"; NewValue = "GenericSystem"},
+        @{OldValue = "VirtIO-FS Service"; NewValue = "GenericService"},
+        @{OldValue = "VirtioSerial"; NewValue = "GenericSoftware"},
+        @{OldValue = "BALLOON"; NewValue = "GenericSoftware"},
+        @{OldValue = "BalloonService"; NewValue = "GenericSoftware"},
+        @{OldValue = "netkvm"; NewValue = "GenericSoftware"}
+    )
 
-# Rename each identifier
-foreach ($qemuID in $qemuIDs) {
-    Rename-QEMURegistryKeys -OldValue $qemuID.OldValue -NewValue $qemuID.NewValue
+    # List of registry paths to search for QEMU-related keys and values
+    $regPaths = @(
+        # "HKLM:\SOFTWARE\kvm",
+        "HKLM:\SYSTEM\ControlSet001\Services"
+        # "HKCU:\Software\kvm"
+    )
+
+    # Rename each blacklisted registry key and associated executables if they exist
+    foreach ($key in $szKeys) {
+        Rename-BlacklistedRegistryKeysAndExecutables -OldValue $key.OldValue -NewValue $key.NewValue -regPaths $regPaths
+    }
+
+    Write-Host "Registry keys and associated executables have been renamed where possible."
 }
-
-Write-Host "QEMU identifiers have been renamed."

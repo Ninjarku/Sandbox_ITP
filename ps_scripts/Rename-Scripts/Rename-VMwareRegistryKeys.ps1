@@ -1,15 +1,9 @@
-# Function to rename QEMU registry keys and values
-function Rename-QEMURegistryKeys {
+# Function to rename VMware registry keys and values
+function Rename-VMwareRegistryKeys () {
     param (
         [string]$OldValue,
-        [string]$NewValue
-    )
-
-    # List of registry paths to search for QEMU-related keys and values
-    $regPaths = @(
-        "HKLM:\SOFTWARE\QEMU",
-        "HKLM:\SYSTEM\CurrentControlSet\Services",
-        "HKCU:\Software\QEMU"
+        [string]$NewValue,
+        [array]$regPaths
     )
 
     foreach ($regPath in $regPaths) {
@@ -54,16 +48,34 @@ function ProcessRegistryKey {
     }
 }
 
-# List of QEMU identifiers to rename
-$qemuIDs = @(
-    @{OldValue = "QEMU"; NewValue = "GenericSoftware"},
-    @{OldValue = "QEMUSystem"; NewValue = "GenericSystem"},
-    @{OldValue = "QEMUService"; NewValue = "GenericService"}
-)
+# Function to rename the KVM keys 
+function RenameVMwareKeys{
+    # List of VMware identifiers to rename
+    $vmwareIDs = @(
+        @{OldValue = "VMware"; NewValue = "GenericSoftware"},
+        # @{OldValue = "vmci"; NewValue = "GenericDevice"},
+        # @{OldValue = "vmhgfs"; NewValue = "GenericDevice"},
+        # @{OldValue = "vmx86"; NewValue = "GenericDevice"},
+        # @{OldValue = "vmusbmouse"; NewValue = "GenericDevice"},
+        # @{OldValue = "vmvss"; NewValue = "GenericDevice"},
+        @{OldValue = "VMTools"; NewValue = "GenericService"},
+        @{OldValue = "VMnetAdapter"; NewValue = "GenericAdapter"},
+        @{OldValue = "VMnetBridge"; NewValue = "GenericBridge"},
+        @{OldValue = "VMnetDHCP"; NewValue = "GenericDHCP"},
+        @{OldValue = "VMnetNat"; NewValue = "GenericNAT"}
+    )
+    
+    # List of registry paths to search for VMware-related keys and values
+    $regPaths = @(
+        "HKLM:\SOFTWARE\VMware, Inc.",
+        "HKLM:\SYSTEM\CurrentControlSet\Services",
+        "HKCU:\Software\VMware, Inc."
+    )
 
-# Rename each identifier
-foreach ($qemuID in $qemuIDs) {
-    Rename-QEMURegistryKeys -OldValue $qemuID.OldValue -NewValue $qemuID.NewValue
+    # Rename each identifier
+    foreach ($vmwareID in $vmwareIDs) {
+        Rename-VMwareRegistryKeys -OldValue $vmwareID.OldValue -NewValue $vmwareID.NewValue -regPaths $regPaths
+    }
+
+    Write-Host "VMware identifiers have been renamed."
 }
-
-Write-Host "QEMU identifiers have been renamed."
