@@ -32,19 +32,21 @@ function ProcessRegistryKey {
     )
 
     try {
-        # Get the property values
-        $values = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
-
-        foreach ($value in $values.PSObject.Properties) {
-            if ($value.Value -is [string] -and $value.Value -match [regex]::Escape($OldValue)) {
-                # Replace old value with new value
-                $newValue = $value.Value -replace [regex]::Escape($OldValue), $NewValue
-                Set-ItemProperty -Path $keyPath -Name $value.Name -Value $newValue -ErrorAction SilentlyContinue
-                Write-Host "Renamed value $OldValue to $NewValue in $($keyPath)"
+        # Get the specific properties of interest
+        $propertiesOfInterest = @("SystemManufacturer", "SystemProductName")
+        $keyProps = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
+        
+        foreach ($prop in $propertiesOfInterest) {
+            if ($keyProps.$prop -is [string] -and $keyProps.$prop -match [regex]::Escape($OldValue)) {
+            Write-Host "FOUND"
+                # Replace old data with new data
+                $newData = $keyProps.$prop -replace [regex]::Escape($OldValue), $NewValue
+                Set-ItemProperty -Path $keyPath -Name $prop -Value $newData -ErrorAction SilentlyContinue
+                Write-Host "Renamed data in $prop from $OldValue to $NewValue in $($keyPath)"
             }
         }
     } catch {
-        Write-Host "Failed to access $($keyPath): $_"
+        Write-Host "Failed to access data in $($keyPath) : $_"
     }
 
     try {
