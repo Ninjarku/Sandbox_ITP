@@ -1,6 +1,33 @@
 #pragma autorecover
 
 #pragma namespace ("\\\\.\\root\\CIMv2")
+class CIM_Fan
+{
+    [key]
+    string DeviceID;
+    boolean ActiveCooling;
+    uint16 Availability;
+    string Caption;
+    uint32 ConfigManagerErrorCode;
+    boolean ConfigManagerUserConfig;
+    string CreationClassName;
+    string Description;
+    uint64 DesiredSpeed;
+    boolean ErrorCleared;
+    string ErrorDescription;
+    datetime InstallDate;
+    uint32   LastErrorCode;
+    string   Name;
+    string   PNPDeviceID;
+    uint16   PowerManagementCapabilities[];
+    boolean  PowerManagementSupported;
+    string   Status;
+    uint16   StatusInfo;
+    string   SystemCreationClassName;
+    string   SystemName;
+    boolean  VariableSpeed;
+};
+
 class Win32_Fan
 {
     [key]

@@ -1,6 +1,16 @@
 #pragma autorecover
 
 #pragma namespace ("\\\\.\\root\\CIMv2")
+class CIM_DiskDrive
+{
+    [key]
+    uint32 Partitions;
+    string DeviceID;
+    string Model;
+    uint64 Size;
+    String Caption;
+};
+
 class Win32_DiskDrive
 {
     [key]

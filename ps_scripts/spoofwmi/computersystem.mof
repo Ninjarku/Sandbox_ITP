@@ -1,6 +1,17 @@
 #pragma autorecover
 
 #pragma namespace ("\\\\.\\root\\CIMv2")
+class CIM_ComputerSystem
+{
+    [key]
+    string Domain;
+    string Manufacturer;
+    string Model;
+    string Name;
+    string PrimaryOwnerName;
+    uint64 TotalPhysicalMemory;
+};
+
 class Win32_ComputerSystem
 {
     [key]

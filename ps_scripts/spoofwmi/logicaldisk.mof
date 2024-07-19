@@ -1,49 +1,95 @@
 #pragma autorecover
 
 #pragma namespace ("\\\\.\\root\\CIMv2")
+
+class CIM_LogicalDisk
+{
+     [key]
+     string   DeviceID;
+     uint16   Access;
+     uint16   Availability;
+     uint64   BlockSize;
+     string   Caption;
+     boolean  Compressed;
+     uint32   ConfigManagerErrorCode;
+     boolean  ConfigManagerUserConfig;
+     string   CreationClassName;
+     string   Description;
+     uint32   DriveType;
+     boolean  ErrorCleared;
+     string   ErrorDescription;
+     string   ErrorMethodology;
+     string   FileSystem;
+     uint64   FreeSpace;
+     datetime InstallDate;
+     uint32   LastErrorCode;
+     uint32   MaximumComponentLength;
+     uint32   MediaType;
+     string   Name;
+     uint64   NumberOfBlocks;
+     string   PNPDeviceID;
+     uint16   PowerManagementCapabilities[];
+     boolean  PowerManagementSupported;
+     string   ProviderName;
+     string   Purpose;
+     boolean  QuotasDisabled;
+     boolean  QuotasIncomplete;
+     boolean  QuotasRebuilding;
+     String   Size;
+     string   Status;
+     uint16   StatusInfo;
+     boolean  SupportsDiskQuotas;
+     boolean  SupportsFileBasedCompression;
+     string   SystemCreationClassName;
+     string   SystemName;
+     boolean  VolumeDirty;
+     string   VolumeName;
+     string   VolumeSerialNumber;
+};
+
 class Win32_LogicalDisk
 {
-    [key]
-    string   DeviceID;
-    uint16   Access;
-    uint16   Availability;
-    uint64   BlockSize;
-    string   Caption;
-    boolean  Compressed;
-    uint32   ConfigManagerErrorCode;
-    boolean  ConfigManagerUserConfig;
-    string   CreationClassName;
-    string   Description;
-    uint32   DriveType;
-    boolean  ErrorCleared;
-    string   ErrorDescription;
-    string   ErrorMethodology;
-    string   FileSystem;
-    uint64   FreeSpace;
-    datetime InstallDate;
-    uint32   LastErrorCode;
-    uint32   MaximumComponentLength;
-    uint32   MediaType;
-    string   Name;
-    uint64   NumberOfBlocks;
-    string   PNPDeviceID;
-    uint16   PowerManagementCapabilities[];
-    boolean  PowerManagementSupported;
-    string   ProviderName;
-    string   Purpose;
-    boolean  QuotasDisabled;
-    boolean  QuotasIncomplete;
-    boolean  QuotasRebuilding;
-    uint64   Size;
-    string   Status;
-    uint16   StatusInfo;
-    boolean  SupportsDiskQuotas;
-    boolean  SupportsFileBasedCompression;
-    string   SystemCreationClassName;
-    string   SystemName;
-    boolean  VolumeDirty;
-    string   VolumeName;
-    string   VolumeSerialNumber;
+     [key]
+     string   DeviceID;
+     uint16   Access;
+     uint16   Availability;
+     uint64   BlockSize;
+     string   Caption;
+     boolean  Compressed;
+     uint32   ConfigManagerErrorCode;
+     boolean  ConfigManagerUserConfig;
+     string   CreationClassName;
+     string   Description;
+     uint32   DriveType;
+     boolean  ErrorCleared;
+     string   ErrorDescription;
+     string   ErrorMethodology;
+     string   FileSystem;
+     uint64   FreeSpace;
+     datetime InstallDate;
+     uint32   LastErrorCode;
+     uint32   MaximumComponentLength;
+     uint32   MediaType;
+     string   Name;
+     uint64   NumberOfBlocks;
+     string   PNPDeviceID;
+     uint16   PowerManagementCapabilities[];
+     boolean  PowerManagementSupported;
+     string   ProviderName;
+     string   Purpose;
+     boolean  QuotasDisabled;
+     boolean  QuotasIncomplete;
+     boolean  QuotasRebuilding;
+     String   Size;
+     string   Status;
+     uint16   StatusInfo;
+     boolean  SupportsDiskQuotas;
+     boolean  SupportsFileBasedCompression;
+     string   SystemCreationClassName;
+     string   SystemName;
+     boolean  VolumeDirty;
+     string   VolumeName;
+     string   VolumeSerialNumber;
 };
 
 

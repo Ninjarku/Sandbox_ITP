@@ -6,6 +6,7 @@ function ChangeDirectory {
 }
 
 function Spoof_Bios { 
+    Remove-WmiObject Win32_Bios
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "bios.mof") -NoNewWindow -Wait
     $newBios = ([WMIClass]"\\.\root\cimv2:Win32_Bios").CreateInstance()
     $newBios.SMBIOSBIOSVersion = "5FCN95WW"
@@ -39,13 +40,19 @@ function Spoof_Processor {
     $processorHashtable["VMMonitorModeExtensions"] = "False"
     $processorHashtable["ThreadCount"] = "4"
 
+    Remove-WmiObject Win32_Processor
+    Remove-WmiObject CIM_Processor
+
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "processor.mof") -NoNewWindow -Wait
-    $newProcessorClass = ([WMIClass]"\\.\root\cimv2:Win32_Processor").CreateInstance()
+    $newProcessor = ([WMIClass]"\\.\root\cimv2:Win32_Processor").CreateInstance()
+    $newCimProcessor = ([WMIClass]"\\.\root\cimv2:CIM_Processor").CreateInstance() 
 
     foreach ($key in $processorHashtable.Keys) {
-        $newProcessorClass.$key = $processorHashtable[$key]
+        $newProcessor.$key = $processorHashtable[$key]
+        $newCimProcessor.$key = $processorHashtable[$key]
     }
-    $newProcessorClass.Put()
+    $newProcessor.Put()
+    $newCimProcessor.Put()
 }
 
 function Spoof_VideoController {
@@ -69,29 +76,48 @@ function Spoof_VideoController {
     $videoControllerHashtable["AdapterCompatibility"] = "Nvidia"
     $videoControllerHashtable["InstalledDisplayDrivers"] = "nvldumdx.dll,nvldumdx.dll,nvldumdx.dll" 
 
+    Remove-WmiObject Win32_VideoController
+    Remove-WmiObject CIM_VideoController
+
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "videocontroller.mof") -NoNewWindow -Wait
     $newVideoController = ([WMIClass]"\\.\root\cimv2:Win32_VideoController").CreateInstance()
-    
+    $newCimVideoController = ([WMIClass]"\\.\root\cimv2:CIM_VideoController").CreateInstance()
+
     foreach ($key in $videoControllerHashtable.Keys) {
         $newVideoController.$key = $videoControllerHashtable[$key]
+        $newCimVideoController.$key = $videoControllerHashtable[$key]
     }
     $newVideoController.Put()
+    $newCimVideoController.Put()
 }
 
 function Spoof_ComputerSystem {
+    $computerSystemHashtable = @{}
     $oldComputerSystem = Get-WmiObject -Class Win32_ComputerSystem 
     $totalPhysicalMemory = $oldComputerSystem.TotalPhysicalMemory
     $primaryOwnerName = $oldComputerSystem.PrimaryOwnerName
 
+    Remove-WmiObject Win32_ComputerSystem
+    Remove-WmiObject CIM_ComputerSystem
+
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "computersystem.mof") -NoNewWindow -Wait
     $newComputerSystem = ([WMIClass]"\\.\root\cimv2:Win32_ComputerSystem").CreateInstance()
-    $newComputerSystem.Domain = "WORKGROUP"
-    $newComputerSystem.Manufacturer = "Phoenix Technologies Ltd."
-    $newComputerSystem.Model = "5FCN95WW"
-    $newComputerSystem.Name = "5FCN95WW"
-    $newComputerSystem.PrimaryOwnerName = $primaryOwnerName
-    $newComputerSystem.TotalPhysicalMemory = $totalPhysicalMemory
+    $newCimComputerSystem = ([WMIClass]"\\.\root\cimv2:CIM_ComputerSystem").CreateInstance()
+
+    $computerSystemHashtable["Domain"] = "WORKGROUP"
+    $computerSystemHashtable["Manufacturer"] = "Phoenix Technologies Ltd."
+    $computerSystemHashtable["Model"] = "5FCN95WW"
+    $computerSystemHashtable["Name"] = "5FCN95WW"
+    $computerSystemHashtable["PrimaryOwnerName"] = $primaryOwnerName
+    $computerSystemHashtable["TotalPhysicalMemory"] = $totalPhysicalMemory
+
+    foreach ($key in $computerSystemHashtable.Keys) {
+        $newComputerSystem.$key = $computerSystemHashtable[$key]
+        $newCimComputerSystem.$key = $computerSystemHashtable[$key]
+    }
+
     $newComputerSystem.Put()
+    $newCimComputerSystem.Put()
 }
 
 function Spoof_LogicalDisk {
@@ -105,18 +131,25 @@ function Spoof_LogicalDisk {
     if ($logicalDiskHashtable["Size"] -lt 64424509440) {
         $logicalDiskHashtable["Size"] = 85899345920
     }
-        
+    
+    Remove-WmiObject Win32_LogicalDisk
+    Remove-WmiObject CIM_LogicalDisk
+
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "logicaldisk.mof") -NoNewWindow -Wait
     $newLogicalDisk = ([WMIClass]"\\.\root\cimv2:Win32_LogicalDisk").CreateInstance()
-
+    $newCimDisk = ([WMIClass]"\\.\root\cimv2:CIM_LogicalDisk").CreateInstance()
+    
     foreach ($key in $logicalDiskHashtable.Keys) {
         $newLogicalDisk.$key = $logicalDiskHashtable[$key]
+        $newCimDisk.$key = $logicalDiskHashtable[$key]
     }
     
     $newLogicalDisk.Put()
+    $newCimDisk.Put()
 } 
 
 function Spoof_DiskDrive {
+    $diskDriveHashtable = @{}
     $oldDiskDrive = Get-WmiObject -Class Win32_DiskDrive | where-Object { $_.DeviceID -eq "\\.\PHYSICALDRIVE0" }
     $partitions = $oldDiskDrive.Partitions
     $deviceID = $oldDiskDrive.DeviceID
@@ -126,18 +159,31 @@ function Spoof_DiskDrive {
     else {
         $size = 85899345920 # 80GB in Bytes
     }
+    
+    Remove-WmiObject Win32_DiskDrive
+    Remove-WmiObject CIM_DiskDrive
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "diskdrive.mof") -NoNewWindow -Wait
     $newDiskDrive = ([WMIClass]"\\.\root\cimv2:Win32_DiskDrive").CreateInstance()
-    $newDiskDrive.Partitions = $partitions
-    $newDiskDrive.DeviceID = $deviceID
-    $newDiskDrive.Model = "SanDisk SD8SNAT256G1002"
-    $newDiskDrive.Size = $size
-    $newDiskDrive.Caption = "SanDisk SD8SNAT256G1002"
+    $newCimDiskDrive = ([WMIClass]"\\.\root\cimv2:CIM_DiskDrive").CreateInstance()
+    
+    $diskDriveHashtable["Partitions"] = $partitions
+    $diskDriveHashtable["DeviceID"] = $deviceID
+    $diskDriveHashtable["Model"] = "SanDisk SD8SNAT256G1002"
+    $diskDriveHashtable["Size"] = $size
+    $diskDriveHashtable["Caption"] = "SanDisk SD8SNAT256G1002"
+    
+    foreach ($key in $diskDriveHashtable.keys) {
+        $newDiskDrive.$key = $diskDriveHashtable[$key]
+        $newCimDiskDrive.$key = $diskDriveHashtable[$key]
+    }
+
     $newDiskDrive.Put()
+    $newCimDiskDrive.Put()
 }
 
 function Spoof_ComputerSystemProduct {
+    Remove-WmiObject Win32_ComputerSystemProduct
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "computersystemproduct.mof") -NoNewWindow -Wait
     $newComputerSystemProduct = ([WMIClass]"\\.\root\cimv2:Win32_ComputerSystemProduct").CreateInstance()
     $newComputerSystemProduct.IdentifyingNumber = "QB06506849OA3OK"
@@ -149,6 +195,7 @@ function Spoof_ComputerSystemProduct {
 }
 
 function Spoof_SystemEnclosure {
+    Remove-WmiObject Win32_SystemEnclosure
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "systemenclosure.mof") -NoNewWindow -Wait
     $newSystemEnclosure = ([WMIClass]"\\.\root\cimv2:Win32_SystemEnclosure").CreateInstance()
     $newSystemEnclosure.Manufacturer = "Phoenix Technologies Ltd."
@@ -160,20 +207,33 @@ function Spoof_SystemEnclosure {
 }
 
 function Spoof_Fan {
+    Remove-WmiObject Win32_Fan
+    Remove-WmiObject CIM_Fan
+    $fanHashTable = @{}
+
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "fan.mof") -NoNewWindow -Wait
     $newFanClass = ([WMIClass]"\\.\root\cimv2:Win32_Fan").CreateInstance()
-    $newFanClass.DeviceID = "root\cimv2 0"
-    $newFanClass.ActiveCooling = "True"
-    $newFanClass.Availability = "3"
-    $newFanClass.Caption = "Cooling Device"
-    $newFanClass.CreationClassName = "Win32_Fan"
-    $newFanClass.Description = "Cooling Device"
-    $newFanClass.Name = "Cooling Device"
-    $newFanClass.Status = "OK"
-    $newFanClass.StatusInfo = "2"
-    $newFanClass.SystemCreationClassName = "Win32_ComputerSystem"
-    $newFanClass.SystemName = [System.Environment]::MachineName
+    $newCimFanClass = ([WMIClass]"\\.\root\cimv2:CIM_Fan").CreateInstance()
+
+    $fanHashTable["DeviceID"] = "root\cimv2 0"
+    $fanHashTable["ActiveCooling"] = "True"
+    $fanHashTable["Availability"] = "3"
+    $fanHashTable["Caption"] = "Cooling Device"
+    $fanHashTable["CreationClassName"] = "Win32_Fan"
+    $fanHashTable["Description"] = "Cooling Device"
+    $fanHashTable["Name"] = "Cooling Device"
+    $fanHashTable["Status"] = "OK"
+    $fanHashTable["StatusInfo"] = "2"
+    $fanHashTable["SystemCreationClassName"] = "Win32_ComputerSystem"
+    $fanHashTable["SystemName"] = [System.Environment]::MachineName
+
+    foreach ($key in $fanHashtable.keys) {
+        $newFanClass.$key = $fanHashtable[$key]
+        $newCimFanClass.$key = $fanHashtable[$key]
+    }
+
     $newFanClass.Put()
+    $newCimFanClass.Put()
 }
 
 function main {
