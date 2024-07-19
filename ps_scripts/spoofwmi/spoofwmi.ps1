@@ -45,14 +45,11 @@ function Spoof_Processor {
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "processor.mof") -NoNewWindow -Wait
     $newProcessor = ([WMIClass]"\\.\root\cimv2:Win32_Processor").CreateInstance()
-    $newCimProcessor = ([WMIClass]"\\.\root\cimv2:CIM_Processor").CreateInstance() 
 
     foreach ($key in $processorHashtable.Keys) {
         $newProcessor.$key = $processorHashtable[$key]
-        $newCimProcessor.$key = $processorHashtable[$key]
     }
     $newProcessor.Put()
-    $newCimProcessor.Put()
 }
 
 function Spoof_VideoController {
@@ -81,14 +78,11 @@ function Spoof_VideoController {
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "videocontroller.mof") -NoNewWindow -Wait
     $newVideoController = ([WMIClass]"\\.\root\cimv2:Win32_VideoController").CreateInstance()
-    $newCimVideoController = ([WMIClass]"\\.\root\cimv2:CIM_VideoController").CreateInstance()
 
     foreach ($key in $videoControllerHashtable.Keys) {
         $newVideoController.$key = $videoControllerHashtable[$key]
-        $newCimVideoController.$key = $videoControllerHashtable[$key]
     }
     $newVideoController.Put()
-    $newCimVideoController.Put()
 }
 
 function Spoof_ComputerSystem {
@@ -102,7 +96,6 @@ function Spoof_ComputerSystem {
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "computersystem.mof") -NoNewWindow -Wait
     $newComputerSystem = ([WMIClass]"\\.\root\cimv2:Win32_ComputerSystem").CreateInstance()
-    $newCimComputerSystem = ([WMIClass]"\\.\root\cimv2:CIM_ComputerSystem").CreateInstance()
 
     $computerSystemHashtable["Domain"] = "WORKGROUP"
     $computerSystemHashtable["Manufacturer"] = "Phoenix Technologies Ltd."
@@ -113,11 +106,9 @@ function Spoof_ComputerSystem {
 
     foreach ($key in $computerSystemHashtable.Keys) {
         $newComputerSystem.$key = $computerSystemHashtable[$key]
-        $newCimComputerSystem.$key = $computerSystemHashtable[$key]
     }
 
     $newComputerSystem.Put()
-    $newCimComputerSystem.Put()
 }
 
 function Spoof_LogicalDisk {
@@ -137,15 +128,12 @@ function Spoof_LogicalDisk {
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "logicaldisk.mof") -NoNewWindow -Wait
     $newLogicalDisk = ([WMIClass]"\\.\root\cimv2:Win32_LogicalDisk").CreateInstance()
-    $newCimDisk = ([WMIClass]"\\.\root\cimv2:CIM_LogicalDisk").CreateInstance()
     
     foreach ($key in $logicalDiskHashtable.Keys) {
         $newLogicalDisk.$key = $logicalDiskHashtable[$key]
-        $newCimDisk.$key = $logicalDiskHashtable[$key]
     }
     
     $newLogicalDisk.Put()
-    $newCimDisk.Put()
 } 
 
 function Spoof_DiskDrive {
@@ -165,7 +153,6 @@ function Spoof_DiskDrive {
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "diskdrive.mof") -NoNewWindow -Wait
     $newDiskDrive = ([WMIClass]"\\.\root\cimv2:Win32_DiskDrive").CreateInstance()
-    $newCimDiskDrive = ([WMIClass]"\\.\root\cimv2:CIM_DiskDrive").CreateInstance()
     
     $diskDriveHashtable["Partitions"] = $partitions
     $diskDriveHashtable["DeviceID"] = $deviceID
@@ -175,11 +162,9 @@ function Spoof_DiskDrive {
     
     foreach ($key in $diskDriveHashtable.keys) {
         $newDiskDrive.$key = $diskDriveHashtable[$key]
-        $newCimDiskDrive.$key = $diskDriveHashtable[$key]
     }
 
     $newDiskDrive.Put()
-    $newCimDiskDrive.Put()
 }
 
 function Spoof_ComputerSystemProduct {
@@ -213,7 +198,6 @@ function Spoof_Fan {
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "fan.mof") -NoNewWindow -Wait
     $newFanClass = ([WMIClass]"\\.\root\cimv2:Win32_Fan").CreateInstance()
-    $newCimFanClass = ([WMIClass]"\\.\root\cimv2:CIM_Fan").CreateInstance()
 
     $fanHashTable["DeviceID"] = "root\cimv2 0"
     $fanHashTable["ActiveCooling"] = "True"
@@ -229,11 +213,9 @@ function Spoof_Fan {
 
     foreach ($key in $fanHashtable.keys) {
         $newFanClass.$key = $fanHashtable[$key]
-        $newCimFanClass.$key = $fanHashtable[$key]
     }
 
     $newFanClass.Put()
-    $newCimFanClass.Put()
 }
 
 function main {

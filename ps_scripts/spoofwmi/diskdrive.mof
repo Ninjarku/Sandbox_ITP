@@ -11,12 +11,6 @@ class CIM_DiskDrive
     String Caption;
 };
 
-class Win32_DiskDrive
+class Win32_DiskDrive : CIM_DiskDrive
 {
-    [key]
-    uint32 Partitions;
-    string DeviceID;
-    string Model;
-    uint64 Size;
-    String Caption;
 };

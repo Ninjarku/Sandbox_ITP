@@ -12,13 +12,6 @@ class CIM_ComputerSystem
     uint64 TotalPhysicalMemory;
 };
 
-class Win32_ComputerSystem
+class Win32_ComputerSystem : CIM_ComputerSystem
 {
-    [key]
-    string Domain;
-    string Manufacturer;
-    string Model;
-    string Name;
-    string PrimaryOwnerName;
-    uint64 TotalPhysicalMemory;
 };
