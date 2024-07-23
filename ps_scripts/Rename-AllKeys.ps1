@@ -21,7 +21,10 @@ function ProcessRegistryKey {
 
     try {
         # Get the specific properties of interest 
-        $propertiesOfInterest = @("SystemManufacturer", "SystemProductName", "SystemBiosVersion", "Identifier")
+        $propertiesOfInterest = @("SystemManufacturer", 
+        "SystemProductName", 
+        "SystemBiosVersion", 
+        "Identifier")
         $keyProps = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
         
         foreach ($prop in $propertiesOfInterest) {
@@ -34,23 +37,6 @@ function ProcessRegistryKey {
         }
     } catch {
         Write-Host "Failed to access data in $($keyPath) : $_"
-    }
-
-    try {
-        # Get the specific properties of interest
-        $propertiesOfInterest = @("SystemManufacturer", "SystemProductName")
-        $keyProps = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
-
-        foreach ($prop in $propertiesOfInterest) {
-            if ($keyProps.$prop -is [string] -and $keyProps.$prop -match [regex]::Escape($OldValue)) {
-                # Replace old data with new data
-                $newData = $keyProps.$prop -replace [regex]::Escape($OldValue), $NewValue
-                Set-ItemProperty -Path $keyPath -Name $prop -Value $newData -ErrorAction SilentlyContinue
-                Write-Host "Renamed data in $prop from $OldValue to $NewValue in $($keyPath)"
-            }
-        }
-    } catch {
-        Write-Host "Failed to access data in $($keyPath): $_"
     }
 }
 
@@ -65,11 +51,6 @@ function RenameQEMUKeys{
 
     # List of registry paths to search for QEMU-related keys and values
     $regPaths = @(
-        # "HKLM:\SOFTWARE\QEMU",
-        # "HKLM:\SOFTWARE\RedHat",
-        # "HKLM:\SYSTEM\ControlSet001\Services",
-        # "HKLM:\SYSTEM\ControlSet001\Control\SystemInformation",
-        # "HKCU:\Software\QEMU"
         "HKLM:\HARDWARE\Description\System",
         "HKLM:\HARDWARE\DEVICEMAP\Scsi\Scsi Port 0\Scsi Bus 0\Target Id 0\Logical Unit Id 0"
     )
@@ -146,10 +127,38 @@ function RenameVMwareKeys{
     Write-Host "VMware identifiers have been renamed."
 }
 
+
+function RenameGenericKeys{
+     # List of Generic identifiers to rename
+     $GenericIDs = @(
+        @{OldValue = "qemu"; NewValue = "Generic"},
+        @{OldValue = "virtio"; NewValue = "Generic"},
+        @{OldValue = "vmware"; NewValue = "Generic"},
+        @{OldValue = "vbox"; NewValue = "Generic"},
+        @{OldValue = "xen"; NewValue = "Generic"},
+        @{OldValue = "VMW"; NewValue = "Generic"},
+        @{OldValue = "Virtual"; NewValue = "Generic"}
+    )
+    
+    # List of registry paths to search for VMware-related keys and values
+    $regPaths = @(
+        "HKLM:\SYSTEM\CurrentControlSet\Enum\IDE",
+        "HKLM:\SYSTEM\CurrentControlSet\Enum\SCSI"
+    )
+
+    # Rename each identifier
+    foreach ($GenericID in $GenericIDs) {
+        Rename-RegistryKeys -OldValue $GenericID.OldValue -NewValue $GenericID.NewValue -regPaths $regPaths
+    }
+
+    Write-Host "Generic identifiers have been renamed."
+}
+
 function Rename-AllKeys{
     RenameVMwareKeys;
     RenameQEMUKeys;
     RenameKVMKeys;
+    RenameGenericKeys;
 }
 
 # Call the rename
