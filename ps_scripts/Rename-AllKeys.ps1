@@ -152,6 +152,5 @@ function Rename-AllKeys{
     RenameKVMKeys;
 }
 
-Rename-AllKeys
-# Restart the computer for it to affect the RTDSC trick that causes vm exit
-shutdown /r /t 0
+# Call the rename
+Rename-AllKeys;
