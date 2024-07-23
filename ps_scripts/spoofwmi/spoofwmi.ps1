@@ -218,6 +218,217 @@ function Spoof_Fan {
     $newFanClass.Put()
 }
 
+function Spoof_SlotsHierarchy {
+    $classesToRemove = @(
+        "Win32_SystemSlot"
+        "CIM_Slot"
+        "CIM_PhysicalConnector"
+        "CIM_PhysicalElement"
+        "CIM_ManagedSystemElement"
+    )
+
+    foreach ($class in $classesToRemove) {
+        try {
+            Remove-WmiObject $class -ErrorAction Stop
+        }
+        catch {
+            Write-Host "IGNORE: $class not found. Skipping"
+        }
+    }
+
+    $slotsHierarchyHashtable = @{}
+    Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "slotshierarchy.mof") -NoNewWindow -Wait
+    $newSlotsClass = ([WMIClass]"\\.\root\cimv2:Win32_SystemSlot").CreateInstance()
+
+    $slotsHierarchyHashtable["Tag"] = "System Slot 0"
+    $slotsHierarchyHashtable["Status"] = "OK"
+    $slotsHierarchyHashtable["Caption"] = "System Slot"
+    $slotsHierarchyHashtable["Description"] = "System Slot"
+    $slotsHierarchyHashtable["Name"] = "System Slot"
+    $slotsHierarchyHashtable["SupportsHotPlug"] = "False"
+    $slotsHierarchyHashtable["MaxDataWidth"] = "10"
+
+    foreach ($key in $slotsHierarchyHashtable.keys) {
+        $newSlotsClass.$key = $slotsHierarchyHashtable[$key]
+    }
+
+    $newSlotsClass.Put()
+}
+
+function Spoof_SensorHierarchy {
+    $classesToRemove = @(
+        "Win32_VoltageProbe"
+        "CIM_VoltageSensor"
+        "CIM_TemperatureSensor"
+        "CIM_NumericSensor"
+        "CIM_Sensor"
+    )
+
+    foreach ($class in $classesToRemove) {
+        try {
+            Remove-WmiObject $class -ErrorAction Stop
+        }
+        catch {
+            Write-Host "IGNORE: $class not found. Skipping"
+        }
+    }
+
+    $sensorHierarchyHashtable = @{}
+    Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "sensorhierarchy.mof") -NoNewWindow -Wait
+    $newVoltageClass = ([WMIClass]"\\.\root\cimv2:Win32_VoltageProbe").CreateInstance()
+
+    $sensorHierarchyHashtable["DeviceID"] = "root\cimv2 0"
+    $sensorHierarchyHashtable["Status"] = "OK"
+    $sensorHierarchyHashtable["Name"] = "Numeric Sensor"
+    $sensorHierarchyHashtable["Accuracy"] = "32768"
+    $sensorHierarchyHashtable["Caption"] = "Numeric Sensor"
+    $sensorHierarchyHashtable["Description"] = "LM78A"
+    $sensorHierarchyHashtable["MaxReadable"] = "32768"
+    $sensorHierarchyHashtable["MinReadable"] = "32768"
+    $sensorHierarchyHashtable["Resolution"] = "32768"
+    $sensorHierarchyHashtable["SystemCreationClassName"] = "Win32_ComputerSystem"
+    $sensorHierarchyHashtable["SystemName"] = [System.Environment]::MachineName
+    $sensorHierarchyHashtable["Tolerance"] = "32768"
+
+    foreach ($key in $sensorHierarchyHashtable.keys) {
+        $newVoltageClass.$key = $sensorHierarchyHashtable[$key]
+    }
+
+    $newVoltageClass.Put()
+}
+
+function Spoof_PortConnector {
+    try {
+        Remove-WmiObject Win32_PortConnector -ErrorAction Stop
+    }
+    catch {
+        Write-Host "IGNORE: Win32_PortConnector not found. Skipping"
+    }
+
+    $portConnectorHashtable = @{}
+    Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "portconnector.mof") -NoNewWindow -Wait
+    $newPortConnector = ([WMIClass]"\\.\root\cimv2:Win32_PortConnector").CreateInstance()
+
+    $portConnectorHashtable["Tag"] = "Port Connector 0"
+    $portConnectorHashtable["Name"] = "Port Connector"
+    $portConnectorHashtable["ExternalReferenceDesignator"] = "PS2Mouse"
+    $portConnectorHashtable["Caption"] = "Port Connector"
+    $portConnectorHashtable["CreationClassName"] = "Win32_PortConnector"
+    $portConnectorHashtable["Description"] = "Port Connector"
+    $portConnectorHashtable["InternalReferenceDesignator"] = "J1A1"
+    $portConnectorHashtable["PortType"] = "14"
+    
+    foreach ($key in $portConnectorHashtable.keys) {
+        $newPortConnector.$key = $portConnectorHashtable[$key]
+    }
+
+    $newPortConnector.Put()
+}
+
+function Spoof_MemoryDevice {
+    try {
+        Remove-WmiObject Win32_MemoryDevice -ErrorAction Stop
+    }
+    catch {
+        Write-Host "IGNORE: Win32_MemoryDevice not found. Skipping"
+    }
+
+    $memoryDeviceHashtable = @{}
+    Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "memorydevice.mof") -NoNewWindow -Wait
+    $newMemoryDevice = ([WMIClass]"\\.\root\cimv2:Win32_MemoryDevice").CreateInstance()
+
+    $memoryDeviceHashtable["DeviceID"] = "Memory Device 0"
+    $memoryDeviceHashtable["Caption"] = "Memory Device"
+    $memoryDeviceHashtable["CreationClassName"] = "Win32_MemoryDevice"
+    $memoryDeviceHashtable["Description"] = "Memory Device"
+    $memoryDeviceHashtable["EndingAddress"] = "16777215"
+    $memoryDeviceHashtable["Name"] = "Memory Device"
+    $memoryDeviceHashtable["StartingAddress"] = "0"
+    $memoryDeviceHashtable["SystemCreationClassName"] = "Win32_ComputerSystem"
+
+    foreach ($key in $memoryDeviceHashtable.keys) {
+        $newMemoryDevice.$key = $memoryDeviceHashtable[$key]
+    }
+
+    $newMemoryDevice.Put()
+}
+
+function Spoof_MemoryHierarchy {
+    $classesToRemove = @(
+        "CIM_Memory"
+        "CIM_CacheMemory"
+        "Win32_CacheMemory"
+    )
+
+    foreach ($class in $classesToRemove) {
+        try {
+            Remove-WmiObject $class -ErrorAction Stop
+        }
+        catch {
+            Write-Host "IGNORE: $class not found. Skipping"
+        }
+    }
+
+    $cacheMemoryHashtable = @{}
+    Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "memoryhierarchy.mof") -NoNewWindow -Wait
+    $newCacheMemory = ([WMIClass]"\\.\root\cimv2:Win32_CacheMemory").CreateInstance()
+
+    $cacheMemoryHashtable["DeviceID"] = "Cache Memory 0"
+    $cacheMemoryHashtable["ErrorCorrectType"] = "4"
+    $cacheMemoryHashtable["Availability"] = "3"
+    $cacheMemoryHashtable["Status"] = "OK"
+    $cacheMemoryHashtable["StatusInfo"] = "3"
+    $cacheMemoryHashtable["BlockSize"] = "1024"
+    $cacheMemoryHashtable["CacheType"] = "5"
+    $cacheMemoryHashtable["InstalledSize"] = "256"
+    $cacheMemoryHashtable["Level"] = "3"
+    $cacheMemoryHashtable["MaxCacheSize"] = "256"
+    $cacheMemoryHashtable["NumberOfBlocks"] = "256"
+    $cacheMemoryHashtable["WritePolicy"] = "3"
+    $cacheMemoryHashtable["Associativity"] = "7"
+    $cacheMemoryHashtable["Caption"] = "Cache Memory"
+    $cacheMemoryHashtable["CreationClassName"] = "Win32_CacheMemory"
+    $cacheMemoryHashtable["Description"] = "Cache Memory"
+    $cacheMemoryHashtable["Name"] = "Cache Memory"
+    $cacheMemoryHashtable["Location"] = "0"
+    $cacheMemoryHashtable["Purpose"] = "L1 Cache"
+    $cacheMemoryHashtable["SystemCreationClassName"] = "Win32_ComputerSystem"
+
+    foreach ($key in $cacheMemoryHashtable.keys) {
+        $newCacheMemory.$key = $cacheMemoryHashtable[$key]
+    }
+
+    $newCacheMemory.Put()
+}
+
+function Spoof_ThermalZoneInformation {
+    try {
+        Remove-WmiObject Win32_Perf -ErrorAction Stop
+    }
+    catch {
+        Write-Host "IGNORE: Win32_Perf not found. Skipping"
+    }
+
+    $thermalZoneInformationHashtable = @{}
+    Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath "thermalzoneinformation.mof") -NoNewWindow -Wait
+    $newThermalZone = ([WMIClass]"\\.\root\cimv2:Win32_PerfFormattedData_Counters_ThermalZoneInformation").CreateInstance()
+
+    $thermalZoneInformationHashtable["Name"] = "\_TZ.THRM"
+    $thermalZoneInformationHashtable["HighPrecisionTemperature"] = "3272"
+    $thermalZoneInformationHashtable["PercentPassiveLimit"] = "100"
+    $thermalZoneInformationHashtable["Temperature"] = "327"
+    $thermalZoneInformationHashtable["ThrottleReasons"] = "0"
+
+    foreach ($key in $thermalZoneInformationHashtable.keys) {
+        $newThermalZone.$key = $thermalZoneInformationHashtable[$key]
+    }
+
+    $newThermalZone.Put()
+
+}
+
+
+
 function main {
     ChangeDirectory
     Spoof_VideoController
@@ -229,6 +440,12 @@ function main {
     Spoof_Fan
     Spoof_Processor
     Spoof_LogicalDisk
+    Spoof_SlotsHierarchy
+    Spoof_SensorHierarchy
+    Spoof_PortConnector
+    Spoof_MemoryDevice
+    Spoof_MemoryHierarchy
+    Spoof_ThermalZoneInformation
 }
 
 main
