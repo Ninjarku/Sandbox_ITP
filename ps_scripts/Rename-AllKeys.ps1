@@ -40,6 +40,7 @@ function ProcessRegistryKey {
     }
 }
 
+# Function to rename the QEMU keys 
 
 function RenameQEMUKeys{
     # List of QEMU identifiers to rename
@@ -79,9 +80,7 @@ function RenameKVMKeys{
 
     # List of registry paths to search for QEMU-related keys and values
     $regPaths = @(
-        # "HKLM:\SOFTWARE\kvm",
         "HKLM:\SYSTEM\ControlSet001\Services"
-        # "HKCU:\Software\kvm"
     )
 
     # Rename each blacklisted registry key and associated executables if they exist
@@ -93,16 +92,11 @@ function RenameKVMKeys{
 }
 
 
-# Function to rename the KVM keys 
+# Function to rename the VMware keys 
 function RenameVMwareKeys{
     # List of VMware identifiers to rename
     $vmwareIDs = @(
         @{OldValue = "VMware"; NewValue = "GenericSoftware"},
-        # @{OldValue = "vmci"; NewValue = "GenericDevice"},
-        # @{OldValue = "vmhgfs"; NewValue = "GenericDevice"},
-        # @{OldValue = "vmx86"; NewValue = "GenericDevice"},
-        # @{OldValue = "vmusbmouse"; NewValue = "GenericDevice"},
-        # @{OldValue = "vmvss"; NewValue = "GenericDevice"},
         @{OldValue = "VMTools"; NewValue = "GenericService"},
         @{OldValue = "VMnetAdapter"; NewValue = "GenericAdapter"},
         @{OldValue = "VMnetBridge"; NewValue = "GenericBridge"},
