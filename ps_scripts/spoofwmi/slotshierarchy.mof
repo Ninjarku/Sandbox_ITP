@@ -1,6 +1,6 @@
 #pragma autorecover
 #pragma namespace("\\\\.\\root\\CIMv2")
-class CIM_ManagedSystemElement
+class CIM_PhysicalConnector
 {
     [key]
     string   Tag;
@@ -9,10 +9,6 @@ class CIM_ManagedSystemElement
     datetime InstallDate;
     string   Name;
     string   Status;
-};
-
-class CIM_PhysicalElement : CIM_ManagedSystemElement 
-{
     string   CreationClassName;
     string   Manufacturer;
     string   Model;
@@ -22,10 +18,6 @@ class CIM_PhysicalElement : CIM_ManagedSystemElement
     string   SerialNumber;
     string   SKU;
     string   Version;
-};
-
-class CIM_PhysicalConnector : CIM_PhysicalElement
-{
     string   ConnectorPinout;
     uint16   ConnectorType[];
 };
@@ -40,6 +32,14 @@ class CIM_Slot : CIM_PhysicalConnector
     boolean  SpecialPurpose;
     boolean  SupportsHotPlug;
     uint32   ThermalRating;
+    boolean  PMESignal;
+    string   SlotDesignation;
+    boolean  Shared;
+    uint32   FunctionNumber;
+    uint32   DeviceNumber;
+    uint32   SegmentGroupNumber;
+    uint16   CurrentUsage;
+    uint32   BusNumber;
     uint16   VccMixedVoltageSupport[];
     uint16   VppMixedVoltageSupport[];
 };

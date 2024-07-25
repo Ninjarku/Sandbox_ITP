@@ -1,0 +1,33 @@
+#pragma autorecover
+#pragma namespace ("\\\\.\\Root\\CIMV2")
+class CIM_Slot : CIM_PhysicalConnector
+{ 
+  [Key]
+  string   Caption;
+  string   ConnectorPinout;
+  uint16   ConnectorType[];
+  string   CreationClassName;
+  string   Description;
+  real32   HeightAllowed;
+  datetime InstallDate;
+  real32   LengthAllowed;
+  string   Manufacturer;
+  uint16   MaxDataWidth;
+  string   Model;
+  string   Name;
+  uint16   Number;
+  string   OtherIdentifyingInfo;
+  string   PartNumber;
+  boolean  PoweredOn;
+  string   PurposeDescription;
+  string   SerialNumber;
+  string   SKU;
+  boolean  SpecialPurpose;
+  string   Status;
+  boolean  SupportsHotPlug;
+  string   Tag;
+  uint32   ThermalRating;
+  uint16   VccMixedVoltageSupport[];
+  string   Version;
+  uint16   VppMixedVoltageSupport[];
+};
