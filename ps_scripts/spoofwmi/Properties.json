@@ -42,7 +42,8 @@
         "Description": "Nvidia Geforce GTX 1070",
         "VideoProcessor": "GeForce GTX 1070",
         "InfSection": "Section058",
-        "InstalledDisplayDrivers": "nvldumdx.dll,nvldumdx.dll,nvldumdx.dll" 
+        "InstalledDisplayDrivers": "nvldumdx.dll,nvldumdx.dll,nvldumdx.dll",
+	"AdapterCompatibility": "NVIDIA"
     }
   },
   {
