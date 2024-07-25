@@ -1,0 +1,12 @@
+#pragma autorecover 
+
+#pragma namespace ("\\\\.\\root\\CIMv2")
+class Win32_Bios
+{
+   [key]
+   string   SMBIOSBIOSVersion;
+   string   Manufacturer;
+   string   Name;
+   string   SerialNumber;
+   string   Version;
+};
