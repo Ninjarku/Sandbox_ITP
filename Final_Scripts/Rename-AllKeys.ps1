@@ -24,6 +24,7 @@ function ProcessRegistryKey {
         $propertiesOfInterest = @("SystemManufacturer", 
         "SystemProductName", 
         "SystemBiosVersion", 
+        "0", 
         "Identifier")
         $keyProps = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
         
@@ -137,6 +138,7 @@ function RenameGenericKeys{
     # List of registry paths to search for VMware-related keys and values
     $regPaths = @(
         "HKLM:\SYSTEM\CurrentControlSet\Enum\IDE",
+        "HKLM:\SYSTEM\CurrentControlSet\Services\Disk\Enum",
         "HKLM:\SYSTEM\CurrentControlSet\Enum\SCSI"
     )
 

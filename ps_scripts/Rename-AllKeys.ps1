@@ -24,6 +24,7 @@ function ProcessRegistryKey {
         $propertiesOfInterest = @("SystemManufacturer", 
         "SystemProductName", 
         "SystemBiosVersion", 
+        "0", 
         "Identifier")
         $keyProps = Get-ItemProperty -Path $keyPath -ErrorAction SilentlyContinue
         
