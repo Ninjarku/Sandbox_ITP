@@ -1,0 +1,46 @@
+#pragma autorecover
+#pragma namespace("\\\\.\\root\\CIMv2")
+class CIM_PhysicalMemory
+{
+    [key]
+    string   Tag; 
+    uint32   Attributes;
+    string   BankLabel;
+    uint64   Capacity;
+    string   Caption;
+    uint32   ConfiguredClockSpeed;
+    uint32   ConfiguredVoltage;
+    string   CreationClassName;
+    uint16   DataWidth;
+    string   Description;
+    string   DeviceLocator;
+    uint16   FormFactor;
+    boolean  HotSwappable;
+    datetime InstallDate;
+    uint16   InterleaveDataDepth;
+    uint32   InterleavePosition;
+    string   Manufacturer;
+    uint32   MaxVoltage;
+    uint16   MemoryType;
+    uint32   MinVoltage;
+    string   Model;
+    string   Name;
+    string   OtherIdentifyingInfo;
+    string   PartNumber;
+    uint32   PositionInRow;
+    boolean  PoweredOn;
+    boolean  Removable;
+    boolean  Replaceable;
+    string   SerialNumber;
+    string   SKU;
+    uint32   SMBIOSMemoryType;
+    uint32   Speed;
+    string   Status;
+    uint16   TotalWidth;
+    uint16   TypeDetail;
+    string   Version;
+};
+
+class Win32_PhysicalMemory : CIM_PhysicalMemory
+{
+};

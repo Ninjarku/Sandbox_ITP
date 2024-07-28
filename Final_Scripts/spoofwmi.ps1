@@ -16,7 +16,13 @@ function Remove-WmiClass {
     )
     foreach ($class in $ClassesToRemove) {
         try {
-            Remove-WmiObject $class -ErrorAction Stop
+            if ($class -eq "MSAcpi_ThermalZoneTemperature") {
+                Remove-WmiObject $class -ErrorAction SilentlyContinue -namespace root\wmi
+            }
+            else {
+                Remove-WmiObject $class -ErrorAction SilentlyContinue -namespace root\cimv2
+            }
+            
         }
         catch {}
     }
@@ -30,8 +36,14 @@ function Compile-MOF {
     )
 
     Start-Process -FilePath "mofcomp.exe" -ArgumentList (Join-Path -Path (Get-Location) -ChildPath $mofFileName) -NoNewWindow -Wait
-    $newClass = ([WMIClass]"\\.\root\cimv2:$classname").CreateInstance()
 
+    if ($classname -eq "MSAcpi_ThermalZoneTemperature") {
+        $newClass = ([WMIClass]"\\.\root\wmi:$classname").CreateInstance()
+    }
+    else {
+        $newClass = ([WMIClass]"\\.\root\cimv2:$classname").CreateInstance()
+    }
+ 
     return $newClass
 }
 

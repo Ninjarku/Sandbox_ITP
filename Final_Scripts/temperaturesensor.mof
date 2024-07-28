@@ -1,52 +1,46 @@
 #pragma autorecover
 #pragma namespace("\\\\.\\root\\CIMv2")
-class CIM_Sensor
+
+class CIM_TemperatureSensor
 {
     [key]
     string   DeviceID;
+    string   Status;
+    string   Description;
+    sint32   CurrentReading;
+    sint32   Accuracy;
     uint16   Availability;
     string   Caption;
     uint32   ConfigManagerErrorCode;
     boolean  ConfigManagerUserConfig;
     string   CreationClassName;
-    string   Description;
     boolean  ErrorCleared;
     string   ErrorDescription;
     datetime InstallDate;
-    uint32   LastErrorCode;
-    string   Name;
-    string   PNPDeviceID;
-    uint16   PowerManagementCapabilities[];
-    boolean  PowerManagementSupported;
-    string   Status;
-    uint16   StatusInfo;
-    string   SystemCreationClassName;
-    string   SystemName;
-};
-
-class CIM_NumericSensor : CIM_Sensor
-{
-    sint32   Accuracy;
     boolean  IsLinear;
+    uint32   LastErrorCode;
     sint32   LowerThresholdCritical;
     sint32   LowerThresholdFatal;
     sint32   LowerThresholdNonCritical;
     sint32   MaxReadable;
     sint32   MinReadable;
-    uint32   Resolution;
-    sint32   Tolerance;
-    sint32   UpperThresholdCritical;
-    sint32   UpperThresholdFatal;
-    sint32   UpperThresholdNonCritical;
-};
-
-class CIM_VoltageSensor : CIM_NumericSensor
-{
+    string   Name;
     sint32   NominalReading;
     sint32   NormalMax;
     sint32   NormalMin;
+    string   PNPDeviceID;
+    uint16   PowerManagementCapabilities[];
+    boolean  PowerManagementSupported;
+    uint32   Resolution;
+    uint16   StatusInfo;
+    string   SystemCreationClassName;
+    string   SystemName;
+    sint32   Tolerance;
+    sint32   UpperThresholdCritical;
+    sint32   UpperThresholdFatal;
+    sint32   UpperThresholdNonCritical;    
 };
 
-class Win32_VoltageProbe : CIM_VoltageSensor 
+class Win32_TemperatureProbe : CIM_TemperatureSensor
 {
 };
