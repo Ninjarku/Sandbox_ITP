@@ -1,4 +1,9 @@
 # Sandbox_ITP
 ITP Sandbox project
+Current Configurations done:
+- WMI Spoofing
+- Registry Key strings replacement
+- NtYieldExection spoofing
 
-Work in progress
+Testware password: infected
+
