@@ -42,8 +42,7 @@
         "Description": "Nvidia Geforce GTX 1070",
         "VideoProcessor": "GeForce GTX 1070",
         "InfSection": "Section058",
-        "InstalledDisplayDrivers": "nvldumdx.dll,nvldumdx.dll,nvldumdx.dll",
-	"AdapterCompatibility": "NVIDIA"
+        "InstalledDisplayDrivers": "nvldumdx.dll,nvldumdx.dll,nvldumdx.dll" 
     }
   },
   {
@@ -137,7 +136,7 @@
   },
   {
     "Classname": "Win32_VoltageProbe",
-    "RelatedClasses": ["Win32_VoltageProbe", "CIM_VoltageSensor", "CIM_TemperatureSensor", "CIM_NumericSensor", "CIM_Sensor"],
+    "RelatedClasses": ["Win32_VoltageProbe", "CIM_VoltageSensor", "CIM_NumericSensor", "CIM_Sensor"],
     "MOF_File": "sensorhierarchy.mof",
     "Properties": {
         "DeviceID": "root\\cimv2 0",
@@ -221,5 +220,87 @@
           "Temperature": "327",
           "ThrottleReasons": "0"
       }
-  }
+  },
+  {
+      "Classname": "Win32_PhysicalMemory",
+      "RelatedClasses": ["Win32_PhysicalMemory", "CIM_PhysicalMemory"],
+      "MOF_File": "physicalmemory.mof",
+      "Properties":{
+          "Tag": "Physical Memory 1",
+          "Attributes": "1",
+          "BankLabel": "BANK 2",
+          "Capacity": "17179869184",
+          "Caption": "Physical Memory",
+          "ConfiguredClockSpeed": "2667",
+          "ConfiguredVoltage": "1200",
+          "CreationClassName": "Win32_PhysicalMemory",
+          "DataWidth": "64",
+          "Description": "Physical Memory",
+          "DeviceLocator": "DIMM 0",
+          "FormFactor": "8",
+          "Manufacturer": "A-DATA Technology",
+          "MaxVoltage": "1200",
+          "MemoryType": "0",
+          "MinVoltage": "1200",
+          "Name": "PhysicalMemory",
+          "PartNumber": "DDR4 3600",
+          "SerialNumber": "7C740400",
+          "SMBIOSMemoryType": "26",
+          "Speed": "2667",
+          "TotalWidth": "64",
+          "TypeDetail": "128"
+    }
+  },
+  {
+      "Classname": "Win32_MemoryArray",
+      "RelatedClasses": ["Win32_SMBIOSMemory", "Win32_MemoryArray"],
+      "MOF_File": "smbiosmemory.mof",
+      "Properties":{
+            "DeviceID": "Memory Device 0",
+            "Caption": "Memory Device",
+            "CreationClassName": "Win32_MemoryDevice",
+            "Description": "Memory Device",
+            "EndingAddress": "16777215",
+            "ErrorInfo": "3",
+            "Name": "Memory Device",
+            "StartingAddress": "0",
+            "SystemCreationClassName": "Win32_ComputerSystem"
+      }
+  },
+  {
+      "Classname": "MSAcpi_ThermalZoneTemperature",
+      "RelatedClasses": ["MSAcpi_ThermalZoneTemperature"],
+      "MOF_File": "msacpithermalzonetemperature.mof",
+      "Properties":{
+            "InstanceName": "ACPI\\ThermalZone\\THRM_0",
+            "Active": "True",
+            "ActiveTripPointCount": "0",
+            "CriticalTripPoint": "3712",
+            "CurrentTemperature": "3202",
+            "PassiveTripPoint": "3692",
+            "Reserved": "0",
+            "SamplingPeriod": "0",
+            "ThermalConstant1": "0",
+            "ThermalConstant2": "0",
+            "ThermalStamp": "132"
+      }
+    },
+    {
+        "Classname": "Win32_TemperatureProbe",
+        "RelatedClasses": ["Win32_TemperatureProbe", "CIM_TemperatureSensor"],
+        "MOF_File": "temperaturesensor.mof",
+        "Properties":{
+            "DeviceID": "root\\cimv2 0",
+            "Status": "OK",
+            "Name": "Numeric Sensor",
+            "Accuracy": "32768",
+            "Caption": "Numeric Sensor",
+            "Description": "LM78A",
+            "MaxReadable": "32768",
+            "MinReadable": "32768",
+            "Resolution": "32768",
+            "SystemCreationClassName": "Win32_ComputerSystem",
+            "Tolerance": "32768"
+        }
+    }
 ]
