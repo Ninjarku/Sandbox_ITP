@@ -55,6 +55,7 @@ function RenameQEMUKeys{
     $regPaths = @(
         "HKLM:\HARDWARE\Description\System",
         "HKLM:\HARDWARE\DEVICEMAP\Scsi\Scsi Port 0\Scsi Bus 0\Target Id 0\Logical Unit Id 0"
+        "HKLM:\SOFTWARE\Microsoft\Virtual Machine\Guest\Parameters"
     )
 
     # Rename each identifier
