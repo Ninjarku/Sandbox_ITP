@@ -1,0 +1,15 @@
+#pragma autorecover
+
+#pragma namespace ("\\\\.\\root\\CIMv2")
+class Win32_ComputerSystemProduct
+{
+    [key]
+    string Caption;
+    string Description;
+    string IdentifyingNumber;
+    string Name;
+    string SKUNumber;
+    string Vendor;
+    string Version;
+    string UUID;
+};

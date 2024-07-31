@@ -1,0 +1,38 @@
+#pragma autorecover 
+
+#pragma namespace ("\\\\.\\root\\CIMv2")
+class Win32_Bios
+{
+   [key]
+   string   Name;
+   uint16   BiosCharacteristics[];
+   string   BIOSVersion[];
+   string   BuildNumber;
+   string   Caption;
+   string   CodeSet;
+   string   CurrentLanguage;
+   string   Description;
+   uint8    EmbeddedControllerMajorVersion;
+   uint8    EmbeddedControllerMinorVersion;
+   string   IdentificationCode;
+   uint16   InstallableLanguages;
+   datetime InstallDate;
+   string   LanguageEdition;
+   String   ListOfLanguages[];
+   string   Manufacturer;
+   string   OtherTargetOS;
+   boolean  PrimaryBIOS;
+   datetime ReleaseDate;
+   string   SerialNumber;
+   string   SMBIOSBIOSVersion;
+   uint16   SMBIOSMajorVersion;
+   uint16   SMBIOSMinorVersion;
+   boolean  SMBIOSPresent;
+   string   SoftwareElementID;
+   uint16   SoftwareElementState;
+   string   Status;
+   uint8    SystemBiosMajorVersion;
+   uint8    SystemBiosMinorVersion;
+   uint16   TargetOperatingSystem;
+   string   Version;
+};

@@ -1,0 +1,30 @@
+[VDME Version 1.0]
+-------------------------[Initialisation]-------------------------
+
+[*] You are running: Microsoft Windows 10 (build 19045) 64-bit
+[*] All APIs present and accounted for.
+
+-------------------------[BIOS/SMBIOS Information]-------------------------
+[*] Manufacturer: Bochs [ GOOD ]
+[*] Version: BOCHS -1 [ GOOD ]
+
+-------------------------[Debugger Detection]-------------------------
+[*] Checking IsDebuggerPresent API [ GOOD ]
+[*] Checking PEB.BeingDebugged [ GOOD ]
+[*] Checking CheckRemoteDebuggerPresent API [ GOOD ]
+...
+
+-------------------------[Hypervisor Detection]-------------------------
+[*] Checking CPUID hypervisor bit [ GOOD ]
+[*] Checking CPUID vendor string [ GOOD ]
+
+-------------------------[Timing Analysis]-------------------------
+[*] Checking RDTSC timing [ GOOD ]
+
+-------------------------[Hardware Fingerprinting]-------------------------
+[*] Checking MAC Address [ GOOD ]
+[*] Checking CPU Features [ GOOD ]
+
+-------------------------[Registry and File System Checks]-------------------------
+[*] Checking registry keys for VM indicators [ GOOD ]
+[*] Checking file system for VM-specific files [ GOOD ]

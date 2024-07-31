@@ -1,0 +1,44 @@
+#pragma autorecover
+
+#pragma namespace ("\\\\.\\root\\CIMv2")
+class Win32_SystemEnclosure
+{
+    [key]
+    string   Manufacturer;
+    boolean  AudibleAlarm;
+    string   BreachDescription;
+    string   CableManagementStrategy;
+    string   Caption;
+    uint16   ChassisTypes[];
+    string   CreationClassName;
+    sint16   CurrentRequiredOrProduced;
+    real32   Depth;
+    string   Description;
+    uint16   HeatGeneration;
+    real32   Height;
+    boolean  HotSwappable;
+    datetime InstallDate;
+    boolean  LockPresent;
+    string   Model;
+    string   Name;
+    uint16   NumberOfPowerCords;
+    string   OtherIdentifyingInfo;
+    string   PartNumber;
+    boolean  PoweredOn;
+    boolean  Removable;
+    boolean  Replaceable;
+    uint16   SecurityBreach;
+    uint16   SecurityStatus;
+    string   SerialNumber;
+    string   ServiceDescriptions[];
+    uint16   ServicePhilosophy[];
+    string   SKU;
+    string   SMBIOSAssetTag;
+    string   Status;
+    string   Tag;
+    string   TypeDescriptions[];
+    string   Version;
+    boolean  VisibleAlarm;
+    real32   Weight;
+    real32   Width;
+};
