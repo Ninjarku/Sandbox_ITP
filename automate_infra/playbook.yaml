@@ -1,5 +1,5 @@
 ---
-#  Be sure to create a inventory.ini with [cape] and an IP for the cape server
+#  Be sure to create a inventory.ini with [cape] and an IP for the cape server  
 #  ansible-playbook -i inventory.ini playbook.yaml --ask-become-pass
 - name: CAPE Deployment
   hosts: cape
@@ -42,16 +42,71 @@
       #   - git
       #   - python3
       #   - python3-pip
+    
+    
+    # mkdir capesandbox && cd capesandbox
 
     - name: Clone CAPE repository
       git:
         repo: https://github.com/kevoreilly/CAPEv2.git
-        dest: /opt/cape
+        dest: /opt/CAPEv2
 
     - name: Install CAPE dependencies
       pip:
-        requirements: /opt/cape/requirements.txt
+        requirements: /opt/CAPEv2/requirements.txt
 
+    # - name: Create capesandbox directory
+    #   file:
+    #     path: /opt/capesandbox
+    #     state: directory
+    #     mode: '0755'
+
+    - name: Change to capesandbox directory
+      command: chdir=/opt/CAPEv2 /bin/true
+
+    # Download the cape script and run
+    # - name: Download CAPE installation script
+    #   get_url:
+    #     url: https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/installer/cape2.sh
+    #     dest: /opt/capesandbox/cape2.sh
+    #     mode: '0755'
+    - name: Copy CAPE installation script from local to remote
+      copy:
+        src: ./cape2.sh
+        dest: /opt/CAPEv2/cape2.sh
+        mode: '0755'
+
+    - name: Run CAPE installation script with debug
+      command: sudo bash /opt/CAPEv2/cape2.sh base cape 
+      responses:
+      '.*': 'y\n'
+      # ansible.builtin.script: 
+      # ansible.builtin.script: /opt/CAPEv2/cape2.sh base cape 
+      # args:
+        # executable: bash
+      register: cape_install_output
+      ignore_errors: yes
+
+    - name: Change ownership of /opt/CAPEv2 to user cape and group cape
+      file:
+        path: /opt/CAPEv2
+        state: directory
+        recurse: yes
+        owner: cape
+        group: cape
+
+    - name: Debug CAPE installation output
+      debug:
+        var: cape_install_output
+
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
     # Remove after
     # - name: Remove temporary GPG key file
     #   file:
