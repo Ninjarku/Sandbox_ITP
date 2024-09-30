@@ -1,0 +1,59 @@
+---
+#  Be sure to create a inventory.ini with [cape] and an IP for the cape server
+#  ansible-playbook -i inventory.ini playbook.yaml --ask-become-pass
+- name: CAPE Deployment
+  hosts: cape
+  become: yes
+  tasks:
+    # - name: Install prerequisites for downloading keys
+    #   apt:
+    #     name:
+    #       - gnupg
+    #       - wget
+    #     state: present
+    # - name: Debug GPG key contents
+    #   command: cat /tmp/RPM-GPG-KEY-mysql
+    #   register: key_contents
+
+    # - debug:
+    #     var: key_contents.stdout
+
+    - name: Update and install dependencies for git
+      apt:
+        name: git
+        state: present
+        force_apt_get: yes
+
+    - name: Update and install dependencies for python3
+      apt:
+        name: python3
+        state: present
+        force_apt_get: yes        
+    
+    - name: Update and install dependencies for python3-pip
+      apt:
+        name: python3-pip
+        state: present
+        force_apt_get: yes      
+      # apt:
+        # update_cache: yes
+        # name: "{{ item }}"
+      # loop:
+      #   - git
+      #   - python3
+      #   - python3-pip
+
+    - name: Clone CAPE repository
+      git:
+        repo: https://github.com/kevoreilly/CAPEv2.git
+        dest: /opt/cape
+
+    - name: Install CAPE dependencies
+      pip:
+        requirements: /opt/cape/requirements.txt
+
+    # Remove after
+    # - name: Remove temporary GPG key file
+    #   file:
+    #     path: /tmp/RPM-GPG-KEY-mysql
+    #     state: absent
