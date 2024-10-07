@@ -44,7 +44,8 @@
       #   - python3-pip
     
     
-    # mkdir capesandbox && cd capesandbox
+    - name: Add CAPE directory as a safe Git directory
+      command: git config --global --add safe.directory /opt/CAPEv2
 
     - name: Clone CAPE repository
       git:
@@ -55,14 +56,8 @@
       pip:
         requirements: /opt/CAPEv2/requirements.txt
 
-    # - name: Create capesandbox directory
-    #   file:
-    #     path: /opt/capesandbox
-    #     state: directory
-    #     mode: '0755'
-
     - name: Change to capesandbox directory
-      command: chdir=/opt/CAPEv2 /bin/true
+      command: chdir=/opt/CAPEv2 /bin/true 
 
     # Download the cape script and run
     # - name: Download CAPE installation script
@@ -75,17 +70,20 @@
         src: ./cape2.sh
         dest: /opt/CAPEv2/cape2.sh
         mode: '0755'
-
+        
     - name: Run CAPE installation script with debug
-      command: sudo bash /opt/CAPEv2/cape2.sh base cape 
-      responses:
-      '.*': 'y\n'
+      shell: yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
+      become: yes
+      register: cape_install_output
+      # command: sudo yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
+      # response:
+        # ".*": 'y\r'
+      # ignore_errors: yes      
       # ansible.builtin.script: 
       # ansible.builtin.script: /opt/CAPEv2/cape2.sh base cape 
       # args:
         # executable: bash
-      register: cape_install_output
-      ignore_errors: yes
+
 
     - name: Change ownership of /opt/CAPEv2 to user cape and group cape
       file:
