@@ -1,0 +1,201 @@
+---
+#  Be sure to create a inventory.ini with [cape] and an IP for the cape server  
+#  ansible-playbook -i inventory.ini playbook_cape.yaml --ask-become-pass
+- name: CAPE Deployment
+  hosts: cape
+  become: yes
+  tasks:
+    # - name: Add MySQL GPG key
+    #   apt_key:
+    #     url: https://repo.mysql.com/RPM-GPG-KEY-mysql
+    #     state: present
+    # - name: Install prerequisites for downloading keys
+    #   apt:
+    #     name:
+    #       - gnupg
+    #       - wget
+    #     state: present
+    # - name: Debug GPG key contents
+    #   command: cat /tmp/RPM-GPG-KEY-mysql
+    #   register: key_contents
+
+    # - debug:
+    #     var: key_contents.stdout
+
+    - name: Update and install dependencies for git
+      apt:
+        name: git
+        state: present
+        force_apt_get: yes
+
+    - name: Update and install dependencies for python3
+      apt:
+        name: python3
+        state: present
+        force_apt_get: yes        
+    
+    - name: Update and install dependencies for python3-pip
+      apt:
+        name: python3-pip
+        state: present
+        force_apt_get: yes 
+
+    # # Step 6: Add deadsnakes PPA for Python 3.10
+    # - name: Add deadsnakes PPA for Python 3.10
+    #   apt_repository:
+    #     repo: ppa:deadsnakes/ppa
+    #     state: present
+    # - name: Install Python 3.10 and related packages
+    #   apt:
+    #     name:
+    #       - python3.10
+    #       - python3.10-venv
+    #       - python3.10-dev
+    #     state: present
+    #     update_cache: yes
+    - name: Download and install MongoDB GPG key for version 7.0
+      shell: |
+        wget https://pgp.mongodb.com/server-7.0.asc
+        sudo cp server-7.0.asc /usr/share/keyrings/mongodb-server-7.0.gpg
+      ignore_errors: yes
+
+    - name: Update alternatives to set Python 3.10 as default
+      shell: |
+        sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 2
+        sudo update-alternatives --set python3 /usr/bin/python3.10
+
+    - name: Verify Python version
+      command: python3 --version
+      register: python_version
+
+    - debug:
+        var: python_version.stdout     
+      
+    # - name: Update and install dependencies for poetry
+    #   apt:
+    #     name: poetry
+    #     state: present
+    #     force_apt_get: yes  
+
+    - name: Add CAPE directory as a safe Git directory
+      command: git config --global --add safe.directory /opt/CAPEv2
+
+    - name: Clone CAPE repository
+      git:
+        repo: https://github.com/kevoreilly/CAPEv2.git
+        dest: /opt/CAPEv2
+        version: fa94c917659a24a412ae793a54e2be48e5f15ec7
+        force: no  # Ensure it doesn't overwrite or force changes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+
+    - name: Check if CAPEv2 repo already exists
+      stat:
+        path: /opt/CAPEv2/.git
+      register: cape_repo_exists
+
+    - name: Skip cloning if repository already exists
+      git:
+        repo: https://github.com/kevoreilly/CAPEv2.git
+        dest: /opt/CAPEv2
+        version: fa94c917659a24a412ae793a54e2be48e5f15ec7
+      when: not cape_repo_exists.stat.exists
+      ignore_errors: yes
+
+    - name: Install CAPE dependencies
+      pip:
+        requirements: /opt/CAPEv2/requirements.txt
+
+    - name: Change to capesandbox directory
+      command: chdir=/opt/CAPEv2 /bin/true 
+
+    # Download the cape script and run
+    # - name: Download CAPE installation script
+    #   get_url:
+    #     url: https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/installer/cape2.sh
+    #     dest: /opt/capesandbox/cape2.sh
+    #     mode: '0755'
+
+    - name: Copy CAPE installation script from local to remote
+      copy:
+        src: ./cape2.sh
+        dest: /opt/CAPEv2/cape2.sh
+        mode: '0755'
+        
+    - name: Run CAPE installation script with debug
+      shell: yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
+      become: yes
+      register: cape_install_output
+      # command: sudo yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
+      # response:
+        # ".*": 'y\r'
+      # ignore_errors: yes      
+      # ansible.builtin.script: 
+      # ansible.builtin.script: /opt/CAPEv2/cape2.sh base cape 
+      # args:
+        # executable: bash
+
+
+    - name: Change ownership of /opt/CAPEv2 to user cape and group cape
+      file:
+        path: /opt/CAPEv2
+        state: directory
+        recurse: yes
+        owner: cape
+        group: cape
+
+    - name: Debug CAPE installation output
+      debug:
+        var: cape_install_output
+# Copy our updated Config scripts from https://github.com/Cassandra-Fu/CAPE_SIT_EDITION
+    - name: Replace cuckoo.conf file with our updated one
+      copy:
+          src: ./conf/cuckoo.conf
+          dest: /opt/CAPEv2/cuckoo.conf
+          mode: '0644'
+    
+    - name: Replace auxiliary.conf file with our updated one
+      copy:
+          src: ./conf/auxiliary.conf
+          dest: /opt/CAPEv2/auxiliary.conf
+          mode: '0644'
+
+    - name: Replace reporting.conf file with our updated one
+      copy:
+          src: ./conf/reporting.conf
+          dest: /opt/CAPEv2/reporting.conf
+          mode: '0644'
+
+    - name: Replace routing.conf file with our updated one
+      copy:
+          src: ./conf/routing.conf
+          dest: /opt/CAPEv2/routing.conf
+          mode: '0644'
+
+    - name: Replace web.conf file with our updated one
+      copy:
+          src: ./conf/web.conf
+          dest: /opt/CAPEv2/web.conf
+          mode: '0644'
+    - name: Replace web.conf file with our updated one
+      copy:
+          src: ./conf/cuckoo.conf
+          dest: /opt/CAPEv2/cuckoo.conf
+          mode: '0644'
+
+    - name: Install poetry dependencies in CAPEv2 directory
+      shell: |
+        cd /opt/CAPEv2
+        sudo poetry install
+      args:
+        chdir: /opt/CAPEv2  # Ensures the command is executed in this directory
+
+# Cleanup
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
+

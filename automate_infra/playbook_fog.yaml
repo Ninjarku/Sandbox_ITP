@@ -97,6 +97,11 @@
       debug:
         var: cape_install_output
 
+    - name: Replace cuckoo.conf file
+      copy:
+          src: ./cuckoo.conf
+          dest: /opt/CAPEv2/cuckoo.conf
+          mode: '0644'
 
     - name: Remove useless packages from the cache
       apt:
@@ -105,8 +110,4 @@
     - name: Remove dependencies that are no longer required
       apt:
         autoremove: yes
-    # Remove after
-    # - name: Remove temporary GPG key file
-    #   file:
-    #     path: /tmp/RPM-GPG-KEY-mysql
-    #     state: absent
+
