@@ -1,82 +1,76 @@
 ---
 #  Be sure to create a inventory.ini with [cape] and an IP for the cape server  
+# You need to install sshpass - 
 #  ansible-playbook -i inventory.ini playbook_cape.yaml --ask-become-pass
 - name: CAPE Deployment
   hosts: cape
   become: yes
   tasks:
-    # - name: Add MySQL GPG key
-    #   apt_key:
-    #     url: https://repo.mysql.com/RPM-GPG-KEY-mysql
-    #     state: present
-    # - name: Install prerequisites for downloading keys
-    #   apt:
-    #     name:
-    #       - gnupg
-    #       - wget
-    #     state: present
-    # - name: Debug GPG key contents
-    #   command: cat /tmp/RPM-GPG-KEY-mysql
-    #   register: key_contents
-
-    # - debug:
-    #     var: key_contents.stdout
-
     - name: Update and install dependencies for git
       apt:
         name: git
         state: present
         force_apt_get: yes
 
-    - name: Update and install dependencies for python3
+    # - name: Apt Add deadsnake
+    #   shell: sudo add-apt-repository ppa:deadsnakes/ppa
+    - name: Add deadsnakes PPA for newer Python versions
+      apt_repository:
+        repo: ppa:deadsnakes/ppa
+        state: present
+        update_cache: yes
+        
+    # - name: Add MongoDB GPG key
+    #   apt_key:
+    #     url: https://www.mongodb.org/static/pgp/server-7.0.asc
+    #     state: present
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+
+    - name: Install Python 3
       apt:
         name: python3
         state: present
-        force_apt_get: yes        
-    
-    - name: Update and install dependencies for python3-pip
+
+    - name: Ensure Python 3 pip is installed
       apt:
         name: python3-pip
         state: present
         force_apt_get: yes 
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
 
-    # # Step 6: Add deadsnakes PPA for Python 3.10
-    # - name: Add deadsnakes PPA for Python 3.10
-    #   apt_repository:
-    #     repo: ppa:deadsnakes/ppa
-    #     state: present
-    # - name: Install Python 3.10 and related packages
+    - name: Install python3.10
+      shell: yes "y" | sudo apt install python3.10 python3.10-venv python3.10-dev
+    
+    # - name: Update and install dependencies for python3
     #   apt:
-    #     name:
-    #       - python3.10
-    #       - python3.10-venv
-    #       - python3.10-dev
+    #     name: python3.10
     #     state: present
-    #     update_cache: yes
-    - name: Download and install MongoDB GPG key for version 7.0
-      shell: |
-        wget https://pgp.mongodb.com/server-7.0.asc
-        sudo cp server-7.0.asc /usr/share/keyrings/mongodb-server-7.0.gpg
-      ignore_errors: yes
-
-    - name: Update alternatives to set Python 3.10 as default
-      shell: |
-        sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 2
-        sudo update-alternatives --set python3 /usr/bin/python3.10
-
-    - name: Verify Python version
-      command: python3 --version
-      register: python_version
-
-    - debug:
-        var: python_version.stdout     
-      
+    #     force_apt_get: yes        
+    
     # - name: Update and install dependencies for poetry
     #   apt:
     #     name: poetry
     #     state: present
     #     force_apt_get: yes  
+    - name: Ensure pip is installed
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
 
+    - name: Install Poetry using pip
+      pip:
+        name: poetry
+        executable: pip3
+        
+
+#  The part for CAPE related install
     - name: Add CAPE directory as a safe Git directory
       command: git config --global --add safe.directory /opt/CAPEv2
 
@@ -123,18 +117,11 @@
         mode: '0755'
         
     - name: Run CAPE installation script with debug
-      shell: yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
+      shell: |
+        DEBIAN_FRONTEND=noninteractive yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
       become: yes
       register: cape_install_output
-      # command: sudo yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
-      # response:
-        # ".*": 'y\r'
-      # ignore_errors: yes      
-      # ansible.builtin.script: 
-      # ansible.builtin.script: /opt/CAPEv2/cape2.sh base cape 
-      # args:
-        # executable: bash
-
+  
 
     - name: Change ownership of /opt/CAPEv2 to user cape and group cape
       file:
@@ -189,6 +176,47 @@
         sudo poetry install
       args:
         chdir: /opt/CAPEv2  # Ensures the command is executed in this directory
+
+    - name: Install CAPE python requirements in CAPEv2 directory
+      shell: |
+        python3 -m pip install -r /opt/CAPEv2/requirements.txt  
+      args:
+        chdir: /opt/CAPEv2  # Ensures the command is executed in this directory
+
+    - name: INSTALL FLARE Signatures
+      shell: |
+        cd /opt/CAPEv2/utils
+        sudo python3.10  /opt/CAPEv2/utils/community.py -cr 
+      args:
+        chdir: /opt/CAPEv2/utils  # Ensures the command is executed in this directory
+
+    - name: Start Database Server
+      shell: |
+        python3.10 /opt/CAPEv2/web/manage.py migrate 
+      args:
+        chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
+
+# Create super user in cape
+    - name: Run createsuperuser command with automated responses
+      expect:
+        command: "python3.10 /opt/CAPEv2/web/manage.py createsuperuser"
+        chdir: /opt/CAPEv2/web
+        responses:
+          "Username": "cape\n"
+          "Email address": "cape@example.com\n"
+          "Password": "cape_pass\n"
+          "Password (again)": "cape_pass\n"
+      no_log: true  # hides the password and other sensitive info in the output
+
+    - name: Generate API token
+      shell: |
+        python3.10 /opt/CAPEv2/web/manage.py drf_create_token cape
+      args:
+        chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
+
+
+    
+
 
 # Cleanup
     - name: Remove useless packages from the cache
