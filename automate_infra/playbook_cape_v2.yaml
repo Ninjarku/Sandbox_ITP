@@ -309,44 +309,44 @@
         chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
 
 # Create super user in cape
-    # - name: Run createsuperuser command with automated responses
-    #   expect:
-    #     command: "bash -c 'source /opt/CAPEv2/venv/bin/activate && python3.10 /opt/CAPEv2/web/manage.py createsuperuser'"
-    #     chdir: /opt/CAPEv2/web
-    #     responses:
-    #       "Username": "cape\n"
-    #       "Email address": "cape@example.com\n"
-    #       "Password": "cape_pass\n"
-    #       "Password (again)": "cape_pass\n"
-    #   ignore_errors: yes
-    #   become: yes
-    #   become_user: cape
+    - name: Run createsuperuser command with automated responses
+      expect:
+        command: python3 /opt/CAPEv2/web/manage.py createsuperuser
+        chdir: /opt/CAPEv2/web
+        responses:
+          "Username": "cape\n"
+          "Email address": "cape@example.com\n"
+          "Password": "cape_pass\n"
+          "Password (again)": "cape_pass\n"
+      ignore_errors: yes
+      become: yes
+      become_user: cape
 
-    #   # no_log: true  # hides the password and other sensitive info in the output
+      # no_log: true  # hides the password and other sensitive info in the output
 
 
-    # - name: Generate API token
-    #   shell: |
-    #     python3 /opt/CAPEv2/web/manage.py drf_create_token cape
-    #   args:
-    #     chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
-    #   register: command_output
-    #   become: no
+    - name: Generate API token
+      shell: |
+        python3 /opt/CAPEv2/web/manage.py drf_create_token cape
+      args:
+        chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
+      register: command_output
+      become: no
   
-    # - name: Extract token from command output
-    #   set_fact:
-    #     extracted_token: "{{ command_output.stdout | regex_search('generated token (.*) for user cape') | regex_replace('generated token ', '') }}"
+    - name: Extract token from command output
+      set_fact:
+        extracted_token: "{{ command_output.stdout | regex_search('generated token (.*) for user cape') | regex_replace('generated token ', '') }}"
   
-    # - name: Save extracted token to a file on the remote host
-    #   copy:
-    #     content: "{{ extracted_token }}"
-    #     dest: "/tmp/extracted_token.txt"
+    - name: Save extracted token to a file on the remote host
+      copy:
+        content: "{{ extracted_token }}"
+        dest: "/tmp/extracted_token.txt"
   
-    # - name: Fetch the extracted token file to the local machine
-    #   fetch:
-    #     src: "/tmp/extracted_token.txt"
-    #     dest: "./local_extracted_token.txt"
-    #     flat: yes
+    - name: Fetch the extracted token file to the local machine
+      fetch:
+        src: "/tmp/extracted_token.txt"
+        dest: "./local_extracted_token.txt"
+        flat: yes
     
 
 
