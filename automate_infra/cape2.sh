@@ -9,15 +9,15 @@
 # Static values
 # Where to place everything
 # CAPE TcpDump will sniff this interface
-NETWORK_IFACE=virbr1
+NETWORK_IFACE=eth0
 # On which IP TOR should listen
-IFACE_IP="192.168.1.1"
+IFACE_IP="192.168.3.45"
 # Confiures default network interface ip route table
 INTERNET_IFACE=$(ip route | grep '^default'|awk '{print $5}')
 # DB password
 PASSWD="SuperPuperSecret"
 # Only in case if you using distributed CAPE And MongoDB sharding.
-DIST_MASTER_IP="192.168.1.1"
+DIST_MASTER_IP="127.0.0.1"
 USER="cape"
 # https://nginx.org/en/linux_packages.html
 nginx_version=1.25.3
