@@ -50,7 +50,7 @@
     #     --run-command 'chcon -R unconfined_u:object_r:ssh_home_t:s0 /root/.ssh/'
     # #    --selinux-relabel
 
-    - name: use virt-install to import image
+    - name: use virt-install to create VM
       become: yes
       command: >
         virt-install 
@@ -74,7 +74,7 @@
       retries: 10
       delay: 5
 
-     - name: use virt-install to import image
+     - name: use virtsh to create snapshot
       become: yes
       shell: >
         virsh snapshot-create-as {{vm_name}} snapshot0 --description "snapshot0_master"     
