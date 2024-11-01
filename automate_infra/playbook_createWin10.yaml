@@ -1,8 +1,8 @@
 - name: Deploys VM based on cloud image
   hosts: localhost
-#  become: yes
+  become: yes
   vars:
-    pool_name: automate_infra
+    pool_name: default
     vm_name: win10-analysis-vm2
     vcpus: 2
     vm_memory: 16384
