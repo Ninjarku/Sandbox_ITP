@@ -1,6 +1,8 @@
 - name: Deploys VM based on cloud image
   hosts: localhost
-  gather_facts: yes
+    become: true
+    become_method: sudo
+    gather_facts: yes
 #  become: yes
   vars:
     vm_name: win10-analysis-vm
