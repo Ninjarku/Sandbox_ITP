@@ -74,7 +74,7 @@
       retries: 10
       delay: 5
 
-     - name: use virtsh to create snapshot
+    - name: use virtsh to create snapshot
       become: yes
       shell: >
         virsh snapshot-create-as {{vm_name}} snapshot0 --description "snapshot0_master"     
