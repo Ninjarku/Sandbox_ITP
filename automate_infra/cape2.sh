@@ -10,7 +10,7 @@
 # CAPE TcpDump will sniff this interface
 NETWORK_IFACE=eth0
 # On which IP TOR should listen
-IFACE_IP="192.168.3.45"
+IFACE_IP="192.168.3.49"
 # Confiures default network interface ip route table
 INTERNET_IFACE=$(ip route | grep '^default'|awk '{print $5}')
 # DB password
