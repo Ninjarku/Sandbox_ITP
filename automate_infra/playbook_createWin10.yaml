@@ -9,7 +9,7 @@
     cleanup: no
     net: default
     ssh_pub_key: "/root/.ssh/id_rsa.pub"
-    qcow2_location: "/var/lib/libvirt/images"
+    qcow2_location: "/opt/libvirt/images"
     vm_os_variant: "win10"
     vm_network_name: "internal_network"
   
