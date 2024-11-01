@@ -31,17 +31,10 @@
     #     remote_src: yes
  
     - name: Install KVM and related packages on Ubuntu
-      apt:
-        name:
-          - qemu-kvm
-          - libvirt-daemon-system
-          - libvirt-clients
-          - bridge-utils
-          - virt-manager
-          - virt-viewer
-        state: present
-        force_apt_get: yes
-        ignore_errors: yes  # This allows the playbook to continue if the task fails
+      apt: name={{ item }} state=present update_cache=true allow_unauthenticated=true
+      loop: [qemu-kvm, libvirt-daemon-system, libvirt-clients, bridge-utils, virt-manager, virt-viewer]
+      force_apt_get: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
 
     # - name: inject ssh key w/ virt-customize
     #   command: >
