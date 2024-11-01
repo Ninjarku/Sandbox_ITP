@@ -5,7 +5,7 @@
     pool_name: default
     vm_name: win10-analysis-vm2
     vcpus: 2
-    vm_memory: 16384
+    vm_memory: 8192
     cleanup: no
     net: default
     ssh_pub_key: "/root/.ssh/id_rsa.pub"
