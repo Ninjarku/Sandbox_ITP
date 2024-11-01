@@ -40,6 +40,7 @@
           - virt-manager
           - virt-viewer
         state: present
+        force_apt_get: yes
 
     # - name: inject ssh key w/ virt-customize
     #   command: >
