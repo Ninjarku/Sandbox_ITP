@@ -46,8 +46,10 @@
         --vcpus={{vcpus}}
         --memory {{ vm_memory }}
         --os-variant {{ vm_os_variant }}
+        --os-type=windows 
         --disk pool={{ pool_name }},size=60,bus=virtio,format=qcow2
-        --cdrom=/data1/libvirt/images/en-us_windows_10_consumer_editions_version_21h2_updated_sep_2022_x64_dvd_bdec96d8.iso
+        --disk /data1/libvirt/images/en-us_windows_10_consumer_editions_version_21h2_updated_sep_2022_x64_dvd_bdec96d8.iso,device=cdrom,bus=ide
+        --disk /data1/libvirt/images/virtio-win-0.1.240.iso,device=cdrom,bus=ide
         --network bridge={{ vm_network_bridge }},model=virtio 
         --vnc
         --boot cdrom,hd,menu=on
