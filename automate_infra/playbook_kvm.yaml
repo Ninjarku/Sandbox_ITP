@@ -1,4 +1,3 @@
----
 - name: Create and configure a new KVM virtual machine with ISO
   hosts: localhost
   become: true
