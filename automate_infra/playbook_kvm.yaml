@@ -22,7 +22,7 @@
       file:
         path: "{{ vm_image_path }}"
         state: directory
-        mode: '0755'
+        mode: '0777'
 
     - name: Create a new VM disk
       community.libvirt.libvirt_volume:
