@@ -52,7 +52,7 @@
         --vcpus={{vcpus}}
         --memory {{ vm_memory }}
         --os-variant {{ vm_os_variant }}
-        --disk pool={{qcow2_location}},size=60,bus=virtio,format=qcow2
+        --disk path={{qcow2_location}},size=60,bus=virtio,format=qcow2
         --cdrom /home/cape/Sandbox_ITP/automate_infra/en-us_windows_10_consumer_editions_version_21h2_updated_sep_2022_x64_dvd_bdec96d8.iso
         --network bridge={{ vm_network_bridge }},model=virtio 
         --vnc
