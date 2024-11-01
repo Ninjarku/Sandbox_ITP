@@ -11,7 +11,7 @@
     cleanup: no
     net: default
     ssh_pub_key: "/root/.ssh/id_rsa.pub"
-    qcow2_location: "/opt/libvirt/images"
+    qcow2_location: "/home/cape/libvirt/images"
     vm_os_variant: "win10"
     vm_network_bridge: "virbr0"
   
