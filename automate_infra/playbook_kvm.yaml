@@ -24,14 +24,14 @@
         state: directory
         mode: '0777'
 
-    - name: Create a new VM disk
-      community.libvirt.libvirt_volume:
-        name: "{{ vm_name }}"
-        capacity: "{{ vm_disk_size }}"
-        format: qcow2
-        pool: default
-        path: "{{ vm_disk_path }}"
-      register: vm_disk
+    # - name: Create a new VM disk
+    #   community.libvirt.libvirt_volume:
+    #     name: "{{ vm_name }}"
+    #     capacity: "{{ vm_disk_size }}"
+    #     format: qcow2
+    #     pool: default
+    #     path: "{{ vm_disk_path }}"
+    #   register: vm_disk
 
     - name: Define and create a new virtual machine with ISO
       community.libvirt.libvirt_domain:
