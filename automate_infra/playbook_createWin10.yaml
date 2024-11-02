@@ -3,7 +3,7 @@
   become: yes
   vars:
     pool_name: default
-    vm_name: win10-analysis-vm2
+    vm_name: win10-analysis-vm3
     vcpus: 2
     vm_memory: 8192
     cleanup: no
