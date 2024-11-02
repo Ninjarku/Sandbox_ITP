@@ -51,6 +51,7 @@
         --disk /data1/libvirt/images/virtio-win-0.1.240.iso,device=cdrom,bus=ide
         --network bridge={{ vm_network_bridge }},model=virtio 
         --vnc
+        --boot hd,cdrom,menu=on
 
     - name: wait for {{ vm_name }} to get an IP
       become: yes
