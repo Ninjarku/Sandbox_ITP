@@ -48,10 +48,10 @@
         --os-variant {{ vm_os_variant }}
         --disk pool={{ pool_name }},size=60,bus=virtio,format=qcow2
         --disk /data1/libvirt/images/en-us_windows_10_consumer_editions_version_21h2_updated_sep_2022_x64_dvd_bdec96d8.iso,device=cdrom,bus=ide
-        --disk /data1/libvirt/images/virtio-win-0.1.240.iso,device=cdrom,bus=ide
+        --disk /data1/libvirt/images/virtio-win-0.1.240.iso,device=cdrom
         --network bridge={{ vm_network_bridge }},model=virtio 
         --vnc
-        --boot hd,cdrom,menu=on
+        --boot cdrom,hd,menu=on
 
     - name: wait for {{ vm_name }} to get an IP
       become: yes
