@@ -53,7 +53,8 @@
         --vnc
         --import
 
-    # - name: use virtsh to create snapshot
-    #   become: yes
-    #   shell: >
-    #     virsh snapshot-create-as {{vm_name}} snapshot0 --description "snapshot0_master"  
+    - name: use virtsh to create snapshot
+      become: yes
+      shell: >
+        virsh snapshot-create-as {{vm_name}} snapshot0 --description "snapshot0_master"
+        
