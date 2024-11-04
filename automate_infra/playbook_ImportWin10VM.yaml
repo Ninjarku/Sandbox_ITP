@@ -1,4 +1,4 @@
-- name: Imports VM based on local image
+- name: Imports VM from local image file
   hosts: localhost
   become: yes
   vars:

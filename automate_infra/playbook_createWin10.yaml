@@ -1,4 +1,4 @@
-- name: Deploys VM based on cloud image
+- name: Creates a VM based on Windows ISO image
   hosts: localhost
   become: yes
   vars:
