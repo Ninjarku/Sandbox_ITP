@@ -1,9 +1,9 @@
-- name: Deploys VM based on cloud image
+- name: Imports VM based on local image
   hosts: localhost
   become: yes
   vars:
     pool_name: default
-    vm_name: win10-analysis-vm
+    vm_name: win10-main-analysis-vm
     vcpus: 2
     vm_memory: 8192
     cleanup: no
@@ -12,7 +12,7 @@
     qcow2_location: "/home/cape/libvirt/images"
     vm_os_variant: "win10"
     vm_network_bridge: "virbr1"
-  
+
   tasks:
     - name: Create a directory to store .qcow2 file if it does not exist
       file:
@@ -25,7 +25,7 @@
     #     src: "{{ qcow2_location }}/{{ qcow2.name }}"
     #     dest: "{{ IMAGE }}"
     #     remote_src: yes
-    
+
     # - name: Install KVM and related packages on Ubuntu
     #   apt: name={{ item }} state=present update_cache=true allow_unauthenticated=true
     #   loop: [qemu-kvm, libvirt-daemon-system, libvirt-clients, bridge-utils, virt-manager, virt-viewer]
@@ -41,15 +41,13 @@
     - name: use virt-install to create VM
       become: yes
       command: >
-        virt-install 
+        virt-install
         --name {{ vm_name }}
         --vcpus={{vcpus}}
         --memory {{ vm_memory }}
         --os-variant {{ vm_os_variant }}
-        --disk /home/cape/vm_images/{{ vm_name }}.qcow2,size=60,bus=scsi,format=qcow2
-        --disk /data1/libvirt/images/en-us_windows_10_consumer_editions_version_21h2_updated_sep_2022_x64_dvd_bdec96d8.iso,device=cdrom
-        --disk /data1/libvirt/images/virtio-win-0.1.240.iso,device=cdrom
-        --network bridge={{ vm_network_bridge }},model=virtio 
+        --disk /data1/libvirt/images/{{ vm_name }}.qcow2,size=60,bus=virtio,format=qcow2
+        --network bridge={{ vm_network_bridge }},model=virtio
         --vnc
         --import
 
@@ -57,4 +55,3 @@
       become: yes
       shell: >
         virsh snapshot-create-as {{vm_name}} snapshot0 --description "snapshot0_master"
-        
