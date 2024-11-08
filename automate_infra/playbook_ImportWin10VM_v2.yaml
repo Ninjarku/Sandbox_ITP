@@ -3,7 +3,7 @@
   become: yes
   vars:
     pool_name: default
-    vm_name: win10-main-analysis-vm
+    vm_name: win10-main-analysis-vm2
     vcpus: 2
     vm_memory: 8192
     cleanup: no
@@ -54,4 +54,4 @@
     - name: use virtsh to create snapshot
       become: yes
       shell: >
-        virsh snapshot-create-as {{vm_name}} snapshot0 --description "snapshot0_master"
+        virsh snapshot-create-as {{vm_name}} snapshot1 --description "snapshot1_master"

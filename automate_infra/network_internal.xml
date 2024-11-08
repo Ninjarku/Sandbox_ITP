@@ -1,5 +1,5 @@
 <network>
-  <name>host-only</name>
+  <name>host-only-network</name>
   <bridge name="virbr2" stp="on" delay="0"/>
   <domain name="host-only"/>
   <ip address="192.168.200.1" netmask="255.255.255.0">
