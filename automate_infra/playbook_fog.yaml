@@ -1,113 +1,140 @@
 ---
-#  Be sure to create a inventory.ini with [cape] and an IP for the cape server  
-#  ansible-playbook -i inventory.ini playbook.yaml --ask-become-pass
-- name: CAPE Deployment
-  hosts: cape
+#  Be sure to create a inventory.ini with [fog] and an IP for the fog server  
+# You need to install sshpass - 
+#  ansible-playbook -i inventory.ini playbook_fog.yaml --ask-become-pass
+- name: Install and configure FOG server on Ubuntu 22.04 (No GUI)
+  hosts: fog
   become: yes
   tasks:
-    # - name: Install prerequisites for downloading keys
-    #   apt:
-    #     name:
-    #       - gnupg
-    #       - wget
+    - name: Get FOG IP from inventory
+      set_fact:
+        fog_ip: "{{ inventory_hostname }}"
+
+    - name: Update and upgrade the system
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install necessary packages
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - git
+        state: present
+
+    # - name: Set a static IP address
+    #   ansible.builtin.lineinfile:
+    #     path: /etc/netplan/01-netcfg.yaml
+    #     regexp: '^\s*addresses:'
+    #     line: "        addresses: [192.168.65.144/24]"
     #     state: present
-    # - name: Debug GPG key contents
-    #   command: cat /tmp/RPM-GPG-KEY-mysql
-    #   register: key_contents
+    #   notify: Restart networking
 
-    # - debug:
-    #     var: key_contents.stdout
+    # - name: Apply netplan configuration
+    #   command: netplan apply
+    #   when: "ansible_facts['distribution'] == 'Ubuntu'"
 
-    - name: Update and install dependencies for git
-      apt:
-        name: git
-        state: present
-        force_apt_get: yes
-
-    - name: Update and install dependencies for python3
-      apt:
-        name: python3
-        state: present
-        force_apt_get: yes        
-    
-    - name: Update and install dependencies for python3-pip
-      apt:
-        name: python3-pip
-        state: present
-        force_apt_get: yes      
-      # apt:
-        # update_cache: yes
-        # name: "{{ item }}"
-      # loop:
-      #   - git
-      #   - python3
-      #   - python3-pip
-    
-    
-    - name: Add CAPE directory as a safe Git directory
-      command: git config --global --add safe.directory /opt/CAPEv2
-
-    - name: Clone CAPE repository
-      git:
-        repo: https://github.com/kevoreilly/CAPEv2.git
-        dest: /opt/CAPEv2
-
-    - name: Install CAPE dependencies
-      pip:
-        requirements: /opt/CAPEv2/requirements.txt
-
-    - name: Change to capesandbox directory
-      command: chdir=/opt/CAPEv2 /bin/true 
-
-    # Download the cape script and run
-    # - name: Download CAPE installation script
-    #   get_url:
-    #     url: https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/installer/cape2.sh
-    #     dest: /opt/capesandbox/cape2.sh
-    #     mode: '0755'
-    - name: Copy CAPE installation script from local to remote
-      copy:
-        src: ./cape2.sh
-        dest: /opt/CAPEv2/cape2.sh
-        mode: '0755'
-        
-    - name: Run CAPE installation script with debug
-      shell: yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
-      become: yes
-      register: cape_install_output
-      # command: sudo yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
-      # response:
-        # ".*": 'y\r'
-      # ignore_errors: yes      
-      # ansible.builtin.script: 
-      # ansible.builtin.script: /opt/CAPEv2/cape2.sh base cape 
-      # args:
-        # executable: bash
-
-
-    - name: Change ownership of /opt/CAPEv2 to user cape and group cape
+    - name: Create directory for FOG
       file:
-        path: /opt/CAPEv2
+        path: /opt/Fog
         state: directory
-        recurse: yes
-        owner: cape
-        group: cape
+   
+    - name: Download FOG project from GitHub
+      git:
+        repo: 'https://github.com/FOGProject/fogproject.git'
+        dest: /opt/Fog
+        force: yes
 
-    - name: Debug CAPE installation output
-      debug:
-        var: cape_install_output
-
-    - name: Replace cuckoo.conf file
+    - name: Copy installfog.sh to FOG server
       copy:
-          src: ./cuckoo.conf
-          dest: /opt/CAPEv2/cuckoo.conf
-          mode: '0644'
+        src: ./fog_conf/installfog.sh
+        dest: /opt/Fog/bin/installfog.sh
+        mode: '0755'
+      become: yes
 
-    - name: Remove useless packages from the cache
-      apt:
-        autoclean: yes
+    - name: Copy functions.sh to FOG server
+      copy:
+        src: ./fog_conf/functions.sh
+        dest: /opt/Fog/lib/common/functions.sh
+        mode: '0755'
+      become: yes
 
-    - name: Remove dependencies that are no longer required
-      apt:
-        autoremove: yes
+    - name: Copy input.sh to FOG server
+      copy:
+        src: ./fog_conf/input.sh
+        dest: /opt/Fog/lib/common/input.sh
+        mode: '0755'
+      become: yes
+
+    - name: Copy newinput.sh to FOG server
+      copy:
+        src: ./fog_conf/newinput.sh
+        dest: /opt/Fog/lib/common/newinput.sh
+        mode: '0755'
+      become: yes
+      
+    - name: Run FOG installation script
+      command: /opt/Fog/bin/installfog.sh
+      register: install_output
+      ignore_errors: yes
+      become: yes
+
+    - name: Send HTTP GET request to check FOG database status
+      uri:
+        url: "http://{{fog_ip}}/fog/status/dbrunning.php"
+        method: GET
+        headers:
+          Accept: "application/json, text/javascript, */*; q=0.01"
+          User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.71 Safari/537.36"
+          X-Requested-With: "XMLHttpRequest"
+          Referer: "http://{{fog_ip}}/fog/management/index.php?node=schema"
+          Accept-Encoding: "gzip, deflate, br"
+          Accept-Language: "en-US,en;q=0.9"
+          Connection: "close"
+      register: response
+      ignore_errors: yes
+
+    # http://192.168.65.144/fog/management
+    - name: Send HTTP POST request to check FOG database status
+      uri:
+        url: "http://{{fog_ip}}/fog/management/index.php?node=schema"
+        method: POST
+        headers:
+          Origin: http://{{fog_ip}}
+          User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.71 Safari/537.36"
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+          Referer: "http://{{fog_ip}}/fog/management/index.php?node=schema"
+          Accept-Encoding: "gzip, deflate, br"
+          Accept-Language: "en-US,en;q=0.9"
+          Connection: "close"
+        body: "fogverified=&confirm="
+        body_format: "form-urlencoded"
+      register: response
+      ignore_errors: yes
+
+    - name: Rerun FOG installation script
+      command: /opt/Fog/bin/installfog.sh
+      register: install_output
+      ignore_errors: yes
+      become: yes
+      # notify: Restart FOG server
+
+    # - name: Enable FOG API in configuration
+    #   lineinfile:
+    #     path: /opt/Fog/config/settings.json
+    #     regexp: '"API_ENABLED": false'
+    #     line: '"API_ENABLED": true'
+    #     state: present
+      # notify: Restart FOG server
+
+  # handlers:
+  #   - name: Restart networking
+  #     service:
+  #       name: systemd-networkd
+  #       state: restarted
+
+  #   - name: Restart FOG server
+  #     command: reboot
+  #     when: install_output is changed
 
