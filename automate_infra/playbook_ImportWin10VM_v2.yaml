@@ -11,7 +11,8 @@
     ssh_pub_key: "/root/.ssh/id_rsa.pub"
     qcow2_location: "/home/cape/libvirt/images"
     vm_os_variant: "win10"
-    vm_network_bridge: "virbr1"
+    vm_network_name: "host-only-network"
+
 
   tasks:
     - name: Create a directory to store .qcow2 file if it does not exist
@@ -47,7 +48,7 @@
         --memory {{ vm_memory }}
         --os-variant {{ vm_os_variant }}
         --disk /data1/libvirt/images/{{ vm_name }}.qcow2,size=60,bus=virtio,format=qcow2
-        --network network=internal-network,model=virtio
+        --network network={{ vm_network_name }},model=virtio
         --vnc
         --import
 
