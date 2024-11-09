@@ -23,18 +23,6 @@
           - git
         state: present
 
-    # - name: Set a static IP address
-    #   ansible.builtin.lineinfile:
-    #     path: /etc/netplan/01-netcfg.yaml
-    #     regexp: '^\s*addresses:'
-    #     line: "        addresses: [192.168.65.144/24]"
-    #     state: present
-    #   notify: Restart networking
-
-    # - name: Apply netplan configuration
-    #   command: netplan apply
-    #   when: "ansible_facts['distribution'] == 'Ubuntu'"
-
     - name: Create directory for FOG
       file:
         path: /opt/Fog
@@ -96,7 +84,7 @@
       ignore_errors: yes
 
     # http://192.168.65.144/fog/management
-    - name: Send HTTP POST request to check FOG database status
+    - name: Send HTTP POST request to trigger FOG database install
       uri:
         url: "http://{{fog_ip}}/fog/management/index.php?node=schema"
         method: POST
@@ -118,15 +106,150 @@
       register: install_output
       ignore_errors: yes
       become: yes
-      # notify: Restart FOG server
 
-    # - name: Enable FOG API in configuration
-    #   lineinfile:
-    #     path: /opt/Fog/config/settings.json
-    #     regexp: '"API_ENABLED": false'
-    #     line: '"API_ENABLED": true'
-    #     state: present
-      # notify: Restart FOG server
+# # API key retrieval
+    - name: Grab the database password from .fogsettings
+      command: "sudo cat /opt/fog/.fogsettings"
+      register: fog_settings
+      changed_when: false
+
+    - name: Extract password from .fogsettings
+      set_fact:
+        db_password: "{{ fog_settings.stdout | regex_search(\"snmysqlpass='([^']+)'\", '\\1') }}"
+
+    - name: Refine db_password to remove brackets and quotes
+      set_fact:
+        db_password_clean: "{{ db_password | regex_replace(\"\\['([^']+)'\\]\", '\\1') }}"
+
+        
+    - name: Retrieve system API token
+      shell: "mysql -u fogmaster -p\"{{db_password_clean}}\" -D fog -e \"SELECT settingValue FROM globalSettings WHERE settingKey = 'FOG_API_TOKEN';\""
+      register: system_api_result
+      changed_when: false
+    
+
+    - name: Debug - Print out the SYSTEM Token
+      debug:
+        msg: "System Token is: {{ system_api_result.stdout_lines[1] }}"
+        
+
+    - name: Make system API token globally available
+      set_fact:
+        system_api_result: "{{ system_api_result }}"
+      delegate_to: localhost
+
+
+    - name: Login to FOG to retrieve session ID
+      uri:
+        url: "http://192.168.65.144/fog/management/index.php?node=home"
+        method: POST
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Origin: "http://192.168.65.144"
+          Referer: "http://192.168.65.144/fog/management/index.php"
+          User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.71 Safari/537.36"
+        body: "uname=fog&upass=password&ulang=en&login="
+        status_code: 302
+        return_content: yes
+      register: login_response
+      
+    - name: Extract session ID from login response cookies
+      set_fact:
+        session_id: "{{ login_response }}"
+
+    - name: Debug - Display retrieved session ID
+      debug:
+        msg: "Session ID is: {{ session_id.set_cookie.split('PHPSESSID=')[1].split(';')[0]}}"
+
+
+    - name: Retrieve the current API token
+      uri:
+        url: "http://{{fog_ip}}/fog/management/index.php?node=user&sub=edit&id=1#user-api"
+        method: GET
+        headers:
+          User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.71 Safari/537.36"
+          Accept: "application/json, text/javascript, */*; q=0.01"
+          Referer: "http://{{fog_ip}}/fog/management/index.php?node=user&sub=edit&id=1"
+          Cookie: "PHPSESSID={{session_id.set_cookie.split('PHPSESSID=')[1].split(';')[0]}}"
+        return_content: yes
+      register: token_response
+
+
+    - name: Extract the current API token from response
+      set_fact:
+        current_token: "{{ token_response.content | regex_search('\"apitoken\" value=\"([^\"]+)\"', '\\1') }}"
+
+    - name: Send POST request to update API token
+      uri:
+        url: "http://{{fog_ip}}/fog/management/index.php?node=user&sub=edit&id=1&tab=user-api"
+        method: POST
+        headers:
+          Content-Type: "multipart/form-data; boundary=----WebKitFormBoundary2QTiHh0ya4Hn5B4l"
+          Accept: "application/json, text/javascript, */*; q=0.01"
+          X-Requested-With: "XMLHttpRequest"
+          User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.71 Safari/537.36"
+          Origin: "http://{{fog_ip}}"
+          Referer: "http://{{fog_ip}}/fog/management/index.php?node=user&sub=edit&id=1"
+          Cookie: "PHPSESSID={{ session_id }}"
+        body: |
+          ------WebKitFormBoundary2QTiHh0ya4Hn5B4l
+          Content-Disposition: form-data; name="apienabled"
+
+          on
+          ------WebKitFormBoundary2QTiHh0ya4Hn5B4l
+          Content-Disposition: form-data; name="apitoken"
+
+          {{ current_token }}
+          ------WebKitFormBoundary2QTiHh0ya4Hn5B4l
+          Content-Disposition: form-data; name="update"
+
+          
+          ------WebKitFormBoundary2QTiHh0ya4Hn5B4l--
+        body_format: raw
+      register: update_response
+
+    - name: Display response after updating the token
+      debug:
+        var: update_response
+    
+
+    - name: Retrieve user API token for fog user
+      shell: "mysql -u fogmaster -p'{{db_password_clean}}' -D fog -e \"SELECT uApiToken FROM users WHERE uName = 'fog';\""
+      register: user_api_result
+      changed_when: false
+
+    - name: Debug - Print out the user Token
+      debug:
+        msg: "User Token is: {{ user_api_result }}"
+      
+    - name: Add localhost to inventory with system and user API tokens as facts
+      add_host:
+        name: localhost
+        system_api_token: "{{ system_api_result }}"
+        user_api_token: "{{ user_api_result }}"
+
+
+- name: Save system and user API token locally
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Debug - Check system API token content
+      debug:
+        var: system_api_token
+
+    - name: Debug - Check user API token content
+      debug:
+        var: user_api_token
+
+    - name: Save system API token to a local file
+      copy:
+        content: "{{ system_api_token.stdout_lines[1] }}"
+        dest: "./system_api_token.txt"
+
+    - name: Save user API token to a local file
+      copy:
+        content: "{{ user_api_token.stdout_lines[1] }}"
+        dest: "./user_api_token.txt"
 
   # handlers:
   #   - name: Restart networking
