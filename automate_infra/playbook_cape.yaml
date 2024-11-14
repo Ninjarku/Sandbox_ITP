@@ -12,8 +12,6 @@
         state: present
         force_apt_get: yes
 
-    # - name: Apt Add deadsnake
-    #   shell: sudo add-apt-repository ppa:deadsnakes/ppa
     - name: Add deadsnakes PPA for newer Python versions
       apt_repository:
         repo: ppa:deadsnakes/ppa
