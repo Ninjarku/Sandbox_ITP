@@ -1,2 +1,10 @@
 
 automate_infra/inventory.ini
+terraform/terraform.tfvars
+
+# Terraform state and backup files in the terraform/ directory
+terraform/*.tfstate
+terraform/*.tfstate.backup
+
+# Terraform configuration directory
+.terraform/
