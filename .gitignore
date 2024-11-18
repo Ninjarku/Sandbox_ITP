@@ -8,3 +8,5 @@ terraform/*.tfstate.backup
 
 # Terraform configuration directory
 .terraform/
+automate_infra/system_api_token.txt
+automate_infra/user_api_token.txt
