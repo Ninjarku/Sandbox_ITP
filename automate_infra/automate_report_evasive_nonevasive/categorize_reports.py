@@ -2,7 +2,7 @@ import pdfplumber
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
-import os
+import osca
 
 class ReportHandler(FileSystemEventHandler):
     def __init__(self, keywords):
