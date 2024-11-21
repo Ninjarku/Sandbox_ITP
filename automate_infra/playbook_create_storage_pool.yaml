@@ -18,16 +18,12 @@
     #     chmod +w /data1/libvirt/images
     - name: Create the new default storage pool
       become: yes
-      shell: |
-        virsh pool-define-as default dir --target "/data1/libvirt/images"
-        virsh pool-build default
-        virsh pool-start default
-        virsh pool-autostart default
-    
-    
-
-
-
+      command: "{{ item }}"
+      loop:
+        - virsh pool-define-as default dir --target "/data1/libvirt/images"
+        - virsh pool-build default
+        - virsh pool-start default
+        - virsh pool-autostart default
 
     
       
