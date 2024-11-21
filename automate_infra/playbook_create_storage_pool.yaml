@@ -1,4 +1,4 @@
-- name: Creates A new storage pool
+- name: Creates A new storage pool and host-only-network
   hosts: localhost
   become: yes
   
@@ -23,6 +23,15 @@
         virsh pool-build default
         virsh pool-start default
         virsh pool-autostart default
+    
+    - name: Create the new host-only internal network
+      become: yes
+      shell: |
+        virsh net-define network_internal.xml
+        virsh net-autostart host-only-network
+        virsh net-start host-only-network
+
+
 
 
     
