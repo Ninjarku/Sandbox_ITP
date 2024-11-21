@@ -27,7 +27,6 @@
 
      - name: Create the new host-only internal network
       become: yes
-      command: "{{ item }}"
       shell: |
         virsh net-define network_internal.xml
         virsh net-autostart host-only-network
