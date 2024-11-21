@@ -1176,7 +1176,7 @@ function install_CAPE() {
     echo "[+] Installing CAPEv2"
 
     cd /opt/CAPEv2/ || return
-    git clone -b new_main https://github.com/Cassandra-Fu/CAPE_SIT_EDITION.git .
+    git clone https://github.com/Cassandra-Fu/CAPE_SIT_EDITION.git .
     cd "/opt/CAPEv2/" || return
     pip3 install poetry crudini
     CRYPTOGRAPHY_DONT_BUILD_RUST=1 sudo -u ${USER} bash -c 'export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring; poetry install'
