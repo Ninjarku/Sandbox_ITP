@@ -28,7 +28,7 @@
     - name: Unzip disk image file
       become: yes
       shell: >
-          7zz x ~/Downloads/win10-main-analysis-vm.7z
+          7zz x /home/cape/Downloads/win10-main-analysis-vm.7z
       
     - name: Move Disk image file to storage pool
       become: yes
