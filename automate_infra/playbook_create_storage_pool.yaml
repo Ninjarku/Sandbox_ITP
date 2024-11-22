@@ -25,7 +25,17 @@
         - virsh pool-start default
         - virsh pool-autostart default
 
-     - name: Create the new host-only internal network
+    - name: Unzip disk image file
+      become: yes
+      shell: >
+          7zz x ~/Downloads/win10-main-analysis-vm.7z
+      
+    - name: Move Disk image file to storage pool
+      become: yes
+      shell: >
+        sudo rsync -ah --progress --remove-source-files ~/Downloads/win10-main-analysis-vm.qcow2 /data1/libvirt/images/win10-main-analysis-vm.qcow2
+
+    - name: Create the new host-only internal network
       become: yes
       shell: |
         virsh net-define network_internal.xml
