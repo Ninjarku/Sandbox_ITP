@@ -33,7 +33,7 @@
     - name: Move Disk image file to storage pool
       become: yes
       shell: >
-        sudo rsync -ah --progress --remove-source-files ~/Downloads/win10-main-analysis-vm.qcow2 /data1/libvirt/images/win10-main-analysis-vm.qcow2
+        sudo rsync -ah --progress --remove-source-files /home/cape/Downloads/win10-main-analysis-vm.qcow2 /data1/libvirt/images/win10-main-analysis-vm.qcow2
 
     - name: Create the new host-only internal network
       become: yes
