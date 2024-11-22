@@ -215,6 +215,39 @@
         src: "/tmp/extracted_token.txt"
         dest: "./local_extracted_token.txt"
         flat: yes
+
+    # Install GUI for Ubuntu
+
+    - name: Find the process holding the lock on /var/lib/dpkg/lock-frontend
+      shell: lsof -t /var/lib/dpkg/lock-frontend
+      register: lock_holder_pid
+      ignore_errors: yes  # In case there’s no process holding the lock
+      failed_when: lock_holder_pid.rc != 0 and lock_holder_pid.stdout != ""  # Only fail if there's output with a non-zero return code
+
+    - name: Kill the lock holder process
+      shell: kill -9 {{ lock_holder_pid.stdout }}
+      when: lock_holder_pid.stdout is defined and lock_holder_pid.stdout != ""
+      ignore_errors: yes
+
+      
+    - name: Preconfigure debconf for slim as default display manager
+      debconf:
+        name: "slim"
+        question: "shared/default-x-display-manager"
+        value: "slim"
+        vtype: "select"
+
+    - name: Install slim display manager
+      shell: yes "y" | apt-get install -y slim
+      ignore_errors: yes
+
+    - name: Install ubuntu-desktop with slim preselected
+      shell: DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop
+      ignore_errors: yes
+
+    - name: Start slim display manager
+      shell: service slim start
+      ignore_errors: yes
     
 # Cleanup
     - name: Remove useless packages from the cache
@@ -224,4 +257,3 @@
     - name: Remove dependencies that are no longer required
       apt:
         autoremove: yes
-
