@@ -241,8 +241,8 @@
       shell: yes "y" | apt-get install -y slim
       ignore_errors: yes
 
-    - name: Install ubuntu-desktop with slim preselected
-      shell: DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop
+    - name: Install ubuntu-desktop-minimal with slim preselected
+      shell: DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop-minimal
       ignore_errors: yes
 
     - name: Start slim display manager
