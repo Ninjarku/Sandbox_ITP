@@ -33,7 +33,7 @@ variable "pm_node_name" {
 variable "pvt_key" {
   description = "Private key file"
   type        = string
-  default     = "none"  # Optional: Path to your private key if needed
+  default     = "~/.ssh/id_rsa"  # Optional: Path to your private key if needed
 }
 
 variable "template_vm_name" {
@@ -64,4 +64,11 @@ variable "vm_disk_location" {
   description = "The storage location for the VM disk (e.g., local-lvm)"
   type        = string
   default     = "local-lvm"  # Replace with your desired storage location
+}
+
+
+variable "cape_host" {
+  description = "The host of ip of cape"
+  type        = string
+  default     = "192.168.65.158"  # Replace with your actual cape ip
 }

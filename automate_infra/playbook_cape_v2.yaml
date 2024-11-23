@@ -199,7 +199,7 @@
       args:
         chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
       register: command_output
-      become: no
+      become_user: cape
   
     - name: Extract token from command output
       set_fact:
@@ -242,7 +242,7 @@
       ignore_errors: yes
 
     - name: Install ubuntu-desktop with slim preselected
-      shell: DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop
+      shell: DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop-minimal
       ignore_errors: yes
 
     - name: Start slim display manager
