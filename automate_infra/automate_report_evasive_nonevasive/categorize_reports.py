@@ -2,7 +2,7 @@ import pdfplumber
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
-#import osca
+import os
 
 class ReportHandler(FileSystemEventHandler):
     def __init__(self, keywords):
@@ -40,16 +40,21 @@ evasive_keywords = [
 ]
 
 # Set up the observer to monitor the CAPE reports directory
-path_to_watch = "/opt/CAPEv2/storage/reports"
+path_to_watch = "/opt/CAPEv2/storage/analyses/latest"
+if not os.path.exists(path_to_watch):
+    print(f"Error: Path '{path_to_watch}' does not exist. Check the directory location.")
+    exit(1)
+
 event_handler = ReportHandler(evasive_keywords)
 observer = Observer()
 observer.schedule(event_handler, path=path_to_watch, recursive=False)
-observer.start()
 
 try:
+    observer.start()
     print(f"Monitoring folder: {path_to_watch}")
     while True:
         time.sleep(1)  # Keep the script running
 except KeyboardInterrupt:
     observer.stop()
+    print("Monitoring stopped by user.")
 observer.join()
