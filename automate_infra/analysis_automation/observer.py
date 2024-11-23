@@ -135,7 +135,8 @@ class Scheduler:
         file = {'file': open(filepath, 'rb')}
         data = {
             'timeout':900,
-            'machine':'win10clone4' 
+            'machine':'win10clone4', 
+            'options':'bp0=ep'
         }
 
         response = requests.post(self.url, files=file, data=data)
