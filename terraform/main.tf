@@ -58,9 +58,16 @@ resource "null_resource" "wait_for_ssh" {
   provisioner "local-exec" {
     command = <<EOT
       echo "Waiting for SSH to become available...";
-      while ! nc -z ${var.cape_host} 22; do echo "SSH not ready, retrying in 5 seconds..."; sleep 5; done;
+      while ! nc -z ${var.cape_host} 22; do
+        echo "SSH not ready, retrying in 5 seconds...";
+        sleep 5;
+      done;
       echo "SSH is now available.";
     EOT
+  }
+
+  triggers = {
+    always_run = timestamp() # Ensures this always runs
   }
 
   depends_on = [proxmox_vm_qemu.cape2]
@@ -70,11 +77,21 @@ resource "null_resource" "wait_for_ssh" {
 resource "null_resource" "run_ansible" {
   provisioner "local-exec" {
     command = <<EOT
+      echo "Ensuring SSH is fully available before running Ansible...";
+      while ! ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa cape@${var.cape_host} "exit" 2>/dev/null; do
+        echo "SSH not ready, retrying in 5 seconds...";
+        sleep 5;
+      done;
+      echo "SSH is fully available. Running Ansible playbook...";
       ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../automate_infra/inventory.ini \
-      --private-key ~/.ssh/id_rsa \
-      --become \
-      ../automate_infra/playbook_cape_v2.yaml
+        --private-key ~/.ssh/id_rsa \
+        --become \
+        ../automate_infra/playbook_cape_v2.yaml;
     EOT
+  }
+
+  triggers = {
+    always_run = timestamp() # Ensures this provisioner always runs
   }
 
   depends_on = [null_resource.wait_for_ssh]

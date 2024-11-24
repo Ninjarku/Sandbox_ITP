@@ -189,32 +189,7 @@
       ignore_errors: yes
       become: yes
       become_user: cape
-
       # no_log: true  # hides the password and other sensitive info in the output
-
-
-    - name: Generate API token
-      shell: |
-        python3 /opt/CAPEv2/web/manage.py drf_create_token cape
-      args:
-        chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
-      register: command_output
-      become_user: cape
-  
-    - name: Extract token from command output
-      set_fact:
-        extracted_token: "{{ command_output.stdout | regex_search('generated token (.*) for user cape') | regex_replace('generated token ', '') }}"
-  
-    - name: Save extracted token to a file on the remote host
-      copy:
-        content: "{{ extracted_token }}"
-        dest: "/tmp/extracted_token.txt"
-  
-    - name: Fetch the extracted token file to the local machine
-      fetch:
-        src: "/tmp/extracted_token.txt"
-        dest: "./local_extracted_token.txt"
-        flat: yes
 
     # Install GUI for Ubuntu
 
@@ -248,7 +223,28 @@
     - name: Start slim display manager
       shell: service slim start
       ignore_errors: yes
-    
+
+    - name: Install 7zip
+      apt:
+        name: 7zip
+        state: present
+        force_apt_get: yes 
+
+    # 7zz x win10-main-analysis-vm.7z
+    - name: Copy windows analysis vm 7zip file from local to remote
+      copy:
+        src: ./win10-main-analysis-vm.7z
+        dest: /tmp/win10-main-analysis-vm.7z
+        mode: '0777'
+
+
+    - name: Unzip win10 with 7zip
+      shell: |
+        cd /tmp
+        7zz x win10-main-analysis-vm.7z
+      args:
+        chdir: /tmp  # Ensures the command is executed in this directory
+
 # Cleanup
     - name: Remove useless packages from the cache
       apt:
@@ -257,3 +253,44 @@
     - name: Remove dependencies that are no longer required
       apt:
         autoremove: yes
+
+
+
+- name: Imports VM from local image file
+  become: yes
+  vars:
+    pool_name: default
+    vm_name: win10-main-analysis-vm
+    vcpus: 2
+    vm_memory: 8192
+    cleanup: no
+    net: default
+    ssh_pub_key: "/root/.ssh/id_rsa.pub"
+    qcow2_location: "/home/cape/libvirt/images"
+    vm_os_variant: "win10"
+    vm_network_name: "host-only-network"
+
+  tasks:
+    - name: Create a directory to store .qcow2 file if it does not exist
+      file:
+          path: ~/libvirt/images
+          state: directory
+          mode: '0755'
+
+    - name: use virt-install to create VM
+      become: yes
+      command: >
+        virt-install
+        --name {{ vm_name }}
+        --vcpus={{vcpus}}
+        --memory {{ vm_memory }}
+        --os-variant {{ vm_os_variant }}
+        --disk /data1/libvirt/images/{{ vm_name }}.qcow2,size=60,bus=virtio,format=qcow2
+        --network network={{ vm_network_name }},model=virtio
+        --vnc
+        --import
+
+    - name: use virtsh to create snapshot
+      become: yes
+      shell: >
+        virsh snapshot-create-as {{vm_name}} snapshot2 --description "snapshot2_master"
