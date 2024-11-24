@@ -45,27 +45,6 @@ resource "proxmox_vm_qemu" "cape2" {
   sshkeys  = file("~/.ssh/id_rsa.pub")
   ipconfig0  = "ip=${var.cape_host}/24,gw=${var.pm_host}" # Set static IP and gateway
   
-  # provisioner "remote-exec" {
-  #   inline = [
-  #     "sudo reboot"
-  #   ]
-  #   connection {
-  #     type        = "ssh"
-  #     user        = "cape"
-  #     private_key = file("~/.ssh/id_rsa")
-  #     host        = var.cape_host
-  #   }
-  # }
-
-
-  # provisioner "local-exec" {
-  #   command = <<EOT
-  #     ansible-playbook -i ../automate_infra/inventory.ini \
-  #     --private-key ~/.ssh/id_rsa \
-  #     --become \
-  #     ../automate_infra/playbook_cape_v2.yaml
-  #   EOT
-  # }
   connection {
     type        = "ssh"
     host        = var.cape_host
