@@ -1,7 +1,7 @@
 ---
 #  Be sure to create a inventory.ini with [cape] and an IP for the cape server  
-# You need to install sshpass - 
-#  ansible-playbook -i inventory.ini playbook_cape_v2.yaml --ask-become-pass
+#  e.g. <CAPE IP> ansible_user=<CAPE USERNAME> ansible_become=true ansible_ssh_private_key_file=~/.ssh/id_rsa 
+#  ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini --private-key ~/.ssh/id_rsa --become playbook_cape_v2.yaml
 - name: CAPE Deployment
   hosts: cape
   become: yes
@@ -36,7 +36,11 @@
         executable: pip3
       ignore_errors: yes  # This allows the playbook to continue if the task fails
         
-
+    # - name: Create CAPE directory
+    #   ansible.builtin.file:
+    #     path: /opt/CAPEv2
+    #     state: directory
+    #     mode: '0755'
 #  The part for CAPE related install
     - name: Add CAPE directory as a safe Git directory
       command: git config --global --add safe.directory /opt/CAPEv2
@@ -230,21 +234,6 @@
         state: present
         force_apt_get: yes 
 
-    # 7zz x win10-main-analysis-vm.7z
-    - name: Copy windows analysis vm 7zip file from local to remote
-      copy:
-        src: ./win10-main-analysis-vm.7z
-        dest: /tmp/win10-main-analysis-vm.7z
-        mode: '0777'
-
-
-    - name: Unzip win10 with 7zip
-      shell: |
-        cd /tmp
-        7zz x win10-main-analysis-vm.7z
-      args:
-        chdir: /tmp  # Ensures the command is executed in this directory
-
 # Cleanup
     - name: Remove useless packages from the cache
       apt:
@@ -256,27 +245,189 @@
 
 
 
-- name: Imports VM from local image file
+- name: Imports VM from local image file and install windows kvm
+  hosts: cape
   become: yes
   vars:
     pool_name: default
     vm_name: win10-main-analysis-vm
     vcpus: 2
     vm_memory: 8192
+    # vm_memory: 2048
     cleanup: no
     net: default
-    ssh_pub_key: "/root/.ssh/id_rsa.pub"
-    qcow2_location: "/home/cape/libvirt/images"
     vm_os_variant: "win10"
     vm_network_name: "host-only-network"
 
   tasks:
-    - name: Create a directory to store .qcow2 file if it does not exist
-      file:
-          path: ~/libvirt/images
-          state: directory
-          mode: '0755'
+    - name: Install qemu-kvm
+      become: yes
+      apt:
+        name: qemu-kvm
+        state: present
+        force_apt_get: yes
+    
+    - name: Install required packages
+      apt:
+        name:
+          - git
+          - build-essential
+          - cmake
+          - ninja-build
+          - python3-dev
+          - cython3
+          - pybind11-dev
+          - python3-pip
+          - libre2-dev
+          - acpica-tools
+          - net-tools
+          - gperf
+          - dbus-x11
+        state: present
+        update_cache: yes
 
+    - name: make kvm installer directory
+      ansible.builtin.file:
+        path: /tmp/kvm_installer
+        state: directory
+        mode: '0777'
+        
+    - name: copy kvm installer from local to remote
+      copy:
+        src: ./kvm-qemu.sh
+        dest: /tmp/kvm_installer/kvm-qemu.sh
+        mode: '0777'
+
+    - name: Dump ACPI data to file
+      command: acpidump > /tmp/acpidump.out
+      become: yes
+      args:
+        executable: /bin/bash  # Use bash for redirection
+
+    - name: Extract ACPI tables from the dump
+      command: acpixtract -a /tmp/kvm_installer/acpidump.out
+      become: yes
+      args:
+        executable: /bin/bash
+    
+    - name: Run iasl command and capture output
+      shell: iasl -d dsdt.dat
+      become: yes
+      register: iasl_output
+      args:
+        chdir: /tmp/kvm_installer
+
+
+    - name: Extract ACPI identifier from output
+      set_fact:
+        acpi_identifier: "{{ (iasl_output.stderr | regex_search('ACPI:.*BOCHS\\s+(\\w+)\\s', '\\1')) | first }}"
+
+    - name: Debug extracted ACPI identifier
+      debug:
+        msg: "Extracted ACPI identifier: {{ acpi_identifier }}"
+
+
+    - name: Input the hardware data value for kvm-qemu.sh
+      shell: sed -i 's/<WOOT>/{{acpi_identifier}}}/g' kvm-qemu.sh
+      become: yes
+      register: iasl_output
+      args:
+        chdir: /tmp/kvm_installer
+
+    - name: Install kvm
+      shell: ./kvm-qemu.sh all cape | tee kvm-qemu.log
+      become: yes
+      register: kvm_install_status
+      args:
+        chdir: /tmp/kvm_installer
+
+    - name: Install virt manager
+      shell: ./kvm-qemu.sh Virtmanager cape | tee kvm-qemu-virtmanager.log
+      become: yes
+      args:
+        chdir: /tmp/kvm_installer
+
+    - name: Reboot the remote machine
+      ansible.builtin.reboot:
+        reboot_timeout: 600  # Adjust the timeout as needed
+      register: reboot_status
+      
+    - name: Wait for SSH to become available
+      wait_for:
+        host: "{{ inventory_hostname }}"
+        port: 22
+        delay: 10
+        timeout: 300  # Adjust the timeout as needed
+        state: started
+        search_regex: OpenSSH
+      register: ssh_status
+
+    - name: Debug reboot and SSH wait status
+      debug:
+        msg:
+          - "Reboot status: {{ reboot_status }}"
+          - "SSH wait status: {{ ssh_status }}"
+
+    - name: Create a directory to store .qcow2 file if it does not exist
+      become: yes
+      file:
+          path: /data1/libvirt/images/
+          state: directory
+          mode: '0766'
+    
+    - name: Create the new default storage pool
+      become: yes
+      command: "{{ item }}"
+      loop:
+        - virsh pool-define-as default dir --target "/data1/libvirt/images"
+        - virsh pool-build default
+        - virsh pool-start default
+        - virsh pool-autostart default
+      ignore_errors: yes
+      
+    #  7zz x win10-main-analysis-vm.7z
+    - name: Copy windows analysis vm 7zip file from local to remote
+      copy:
+        src: ./win10-main-analysis-vm.7z
+        dest: /tmp/win10-main-analysis-vm.7z
+        mode: '0777'
+
+
+    - name: Extract Windows 10 VM with 7-Zip
+      shell: 7zz x win10-main-analysis-vm.7z
+      args:
+        chdir: /tmp
+
+    - name: Move Disk image file to storage pool
+      become: yes
+      shell: >
+        rsync -ah --progress --remove-source-files /tmp/win10-main-analysis-vm.qcow2 /data1/libvirt/images/win10-main-analysis-vm.qcow2
+
+
+    - name: Copy network_internal.xml from local to remote
+      copy:
+        src: ./network_internal.xml
+        dest: /tmp/network_internal.xml
+        mode: '0755'
+      
+
+    - name: Create the new host-only internal network
+      become: yes
+      shell: |
+        virsh net-define network_internal.xml
+        virsh net-autostart {{vm_network_name}}
+        virsh net-start {{vm_network_name}}
+      args:
+        chdir: /tmp
+
+    - name: install virt viewer
+      become: yes
+      apt:
+        name: virt-viewer
+        state: present
+        force_apt_get: yes
+
+  # Create the win10
     - name: use virt-install to create VM
       become: yes
       command: >
@@ -294,3 +445,6 @@
       become: yes
       shell: >
         virsh snapshot-create-as {{vm_name}} snapshot2 --description "snapshot2_master"
+
+    
+    

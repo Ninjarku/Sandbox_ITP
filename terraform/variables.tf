@@ -51,7 +51,7 @@ variable "vm_memory" {
 variable "vm_disk_size" {
   description = "The size of the VM disk (e.g., 40G)"
   type        = string
-  default     = "40G"  # Replace with your desired disk size
+  default     = "100G"  # Replace with your desired disk size
 }
 
 variable "vm_disk_type" {

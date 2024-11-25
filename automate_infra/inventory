@@ -1,5 +1,0 @@
-[servers]
-server1 ansible_host=192.168.152.139
-
-[all:vars]
-ansible_user=cape
