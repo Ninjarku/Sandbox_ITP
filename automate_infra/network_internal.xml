@@ -4,7 +4,8 @@
   <!-- <domain name="host-only"/> -->
   <ip address="192.168.200.1" netmask="255.255.255.0">
     <dhcp>
-      <range start="192.168.200.20" end="192.168.200.254"/>
+      <range start="192.168.200.15" end="192.168.200.254"/>
+      <host name='win10-main-analysis-vm' ip='192.168.200.25'/>
     </dhcp>
   </ip>
 </network>
