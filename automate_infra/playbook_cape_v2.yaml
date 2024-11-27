@@ -208,7 +208,7 @@
         --memory {{ vm_memory }}
         --os-variant {{ vm_os_variant }}
         --disk /data1/libvirt/images/{{ vm_name }}.qcow2,size=60,bus=virtio,format=qcow2
-        --network network={{ vm_network_name }},model=virtio
+        --network network={{ vm_network_name }},model=virtio,mac="52:54:00:48:27:1D"
         --vnc
         --import
 
