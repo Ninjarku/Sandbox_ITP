@@ -17,6 +17,11 @@
     vm_network_name: "host-only-network"
 
   tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
     - name: Install qemu-kvm
       become: yes
       apt:
@@ -153,7 +158,12 @@
         dest: /tmp/win10-main-analysis-vm.7z
         mode: '0777'
 
-
+    - name: Install 7zip
+      apt:
+        name: 7zip
+        state: present
+        force_apt_get: yes 
+        
     - name: Extract Windows 10 VM with 7-Zip
       shell: 7zz x win10-main-analysis-vm.7z
       args:
@@ -439,12 +449,6 @@
     - name: Start slim display manager
       shell: service slim start
       ignore_errors: yes
-
-    - name: Install 7zip
-      apt:
-        name: 7zip
-        state: present
-        force_apt_get: yes 
 
     - name: Create /automate directory
       file:
