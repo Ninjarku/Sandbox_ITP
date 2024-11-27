@@ -347,6 +347,12 @@
       args:
         chdir: /tmp/kvm_installer
 
+    - name: Install libvirt drivers
+      shell: ./kvm-qemu.sh Libvirt cape | tee kvm-qemu-libvirt.log
+      become: yes
+      args:
+        chdir: /tmp/kvm_installer
+
     - name: Reboot the remote machine
       ansible.builtin.reboot:
         reboot_timeout: 600  # Adjust the timeout as needed
