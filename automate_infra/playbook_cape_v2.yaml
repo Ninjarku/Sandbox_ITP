@@ -414,7 +414,7 @@
     - name: Create the new host-only internal network
       become: yes
       shell: |
-        virsh net-define network_internal.xml
+        virsh net-define /tmp/network_internal.xml
         virsh net-autostart {{vm_network_name}}
         virsh net-start {{vm_network_name}}
       args:
