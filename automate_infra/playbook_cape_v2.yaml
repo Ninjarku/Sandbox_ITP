@@ -10,7 +10,6 @@
     vm_name: win10-main-analysis-vm
     vcpus: 2
     vm_memory: 8192
-    # vm_memory: 2048
     cleanup: no
     net: default
     vm_os_variant: "win10"
@@ -21,7 +20,61 @@
       ansible.builtin.apt:
         update_cache: yes
       ignore_errors: yes  # This allows the playbook to continue if the task fails
+    # Install GUI for Ubuntu
 
+    - name: Find the process holding the lock on /var/lib/dpkg/lock-frontend
+      shell: lsof -t /var/lib/dpkg/lock-frontend
+      register: lock_holder_pid
+      ignore_errors: yes  # In case there’s no process holding the lock
+      failed_when: lock_holder_pid.rc != 0 and lock_holder_pid.stdout != ""  # Only fail if there's output with a non-zero return code
+
+    - name: Kill the lock holder process
+      shell: kill -9 {{ lock_holder_pid.stdout }}
+      when: lock_holder_pid.stdout is defined and lock_holder_pid.stdout != ""
+      ignore_errors: yes
+
+      
+    - name: Preconfigure debconf for slim as default display manager
+      debconf:
+        name: "slim"
+        question: "shared/default-x-display-manager"
+        value: "slim"
+        vtype: "select"
+
+    - name: Install slim display manager
+      shell: yes "y" | apt-get install -y slim
+      ignore_errors: yes
+
+    - name: Install ubuntu-desktop-minimal with slim preselected
+      shell: DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop-minimal
+      ignore_errors: yes
+
+    - name: Start slim display manager
+      shell: service slim start
+      ignore_errors: yes
+
+    - name: Create /automate directory
+      file:
+        path: /automate
+        state: directory
+        mode: '0777'
+
+    - name: Copy analysis_automation folder to target machine
+      copy:
+        src: ./analysis_automation
+        dest: /automate/analysis_automation
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copy automate_report_evasive_nonevasive folder to target machine
+      copy:
+        src: ./automate_report_evasive_nonevasive
+        dest: /automate/automate_report_evasive_nonevasive
+        owner: root
+        group: root
+        mode: '0755'
+        
     - name: Install qemu-kvm
       become: yes
       apt:
@@ -208,9 +261,12 @@
         --memory {{ vm_memory }}
         --os-variant {{ vm_os_variant }}
         --disk /data1/libvirt/images/{{ vm_name }}.qcow2,size=60,bus=virtio,format=qcow2
-        --network network={{ vm_network_name }},model=virtio
+        --network network={{ vm_network_name }},model=virtio,mac="52:54:00:48:27:1D"
         --vnc
         --import
+        --check path_in_use=off
+        --check mac_in_use=off
+        --wait 0
 
     - name: use virtsh to create snapshot
       become: yes
@@ -417,60 +473,7 @@
       become_user: cape
       # no_log: true  # hides the password and other sensitive info in the output
 
-    # Install GUI for Ubuntu
-
-    - name: Find the process holding the lock on /var/lib/dpkg/lock-frontend
-      shell: lsof -t /var/lib/dpkg/lock-frontend
-      register: lock_holder_pid
-      ignore_errors: yes  # In case there’s no process holding the lock
-      failed_when: lock_holder_pid.rc != 0 and lock_holder_pid.stdout != ""  # Only fail if there's output with a non-zero return code
-
-    - name: Kill the lock holder process
-      shell: kill -9 {{ lock_holder_pid.stdout }}
-      when: lock_holder_pid.stdout is defined and lock_holder_pid.stdout != ""
-      ignore_errors: yes
-
-      
-    - name: Preconfigure debconf for slim as default display manager
-      debconf:
-        name: "slim"
-        question: "shared/default-x-display-manager"
-        value: "slim"
-        vtype: "select"
-
-    - name: Install slim display manager
-      shell: yes "y" | apt-get install -y slim
-      ignore_errors: yes
-
-    - name: Install ubuntu-desktop-minimal with slim preselected
-      shell: DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop-minimal
-      ignore_errors: yes
-
-    - name: Start slim display manager
-      shell: service slim start
-      ignore_errors: yes
-
-    - name: Create /automate directory
-      file:
-        path: /automate
-        state: directory
-        mode: '0777'
-
-    - name: Copy analysis_automation folder to target machine
-      copy:
-        src: ./analysis_automation
-        dest: /automate/analysis_automation
-        owner: root
-        group: root
-        mode: '0755'
-
-    - name: Copy automate_report_evasive_nonevasive folder to target machine
-      copy:
-        src: ./automate_report_evasive_nonevasive
-        dest: /automate/automate_report_evasive_nonevasive
-        owner: root
-        group: root
-        mode: '0755'
+    
 
 # Cleanup
     - name: Remove useless packages from the cache
@@ -480,10 +483,3 @@
     - name: Remove dependencies that are no longer required
       apt:
         autoremove: yes
-
-
-
-
-
-    
-    
