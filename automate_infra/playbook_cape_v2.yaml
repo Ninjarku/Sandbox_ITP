@@ -137,7 +137,20 @@
           src: ./conf/web.conf
           dest: /opt/CAPEv2/web.conf
           mode: '0644'
-    - name: Replace web.conf file with our updated one
+
+    - name: Replace kvm.conf file with our updated one
+      copy:
+          src: ./conf/kvm.conf
+          dest: /opt/CAPEv2/kvm.conf
+          mode: '0644'
+
+    - name: Replace api.conf file with our updated one
+      copy:
+          src: ./conf/api.conf
+          dest: /opt/CAPEv2/api.conf
+          mode: '0644'
+          
+    - name: Replace cuckoo.conf file with our updated one
       copy:
           src: ./conf/cuckoo.conf
           dest: /opt/CAPEv2/cuckoo.conf
