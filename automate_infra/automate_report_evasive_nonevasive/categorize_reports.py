@@ -55,7 +55,7 @@ evasive_keywords = [
 ]
 
 # Set up the observer to monitor the CAPE reports directory
-path_to_watch = "/opt/CAPEv2/storage/analyses/latest/reports"
+path_to_watch = "/opt/CAPEv2/storage/analyses/11/reports"
 if not os.path.exists(path_to_watch):
     print(f"Error: Path '{path_to_watch}' does not exist. Check the directory location.")
     exit(1)
