@@ -45,7 +45,7 @@ variable "template_vm_name" {
 variable "vm_memory" {
   description = "The amount of RAM for the VM"
   type        = number
-  default     = 10240  # Replace with desired RAM in MB
+  default     = 12288  # Replace with desired RAM in MB
 }
 
 variable "vm_disk_size" {

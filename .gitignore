@@ -1,5 +1,6 @@
 
 automate_infra/inventory.ini
+automate_infra/automate_report_evasive_nonevasive/test_dir/
 terraform/terraform.tfvars
 
 # Terraform state and backup files in the terraform/ directory
@@ -10,3 +11,6 @@ terraform/*.tfstate.backup
 .terraform/
 automate_infra/system_api_token.txt
 automate_infra/user_api_token.txt
+automate_infra/win10-main-analysis-vm.7z
+terraform/.terraform.tfstate.lock.info
+Testware_Binaries/wmi-mal-v3/wmi-mal.exe
