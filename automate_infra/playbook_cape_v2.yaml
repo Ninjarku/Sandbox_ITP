@@ -58,23 +58,33 @@
         path: /automate
         state: directory
         mode: '0777'
+    # In case of rerun
+    - name: Remove existing automate_report_evasive_nonevasive directory
+      file:
+        path: /automate/automate_report_evasive_nonevasive
+        state: absent
+
+    - name: Remove existing analysis_automation directory
+      file:
+        path: /automate/analysis_automation
+        state: absent
 
     - name: Copy analysis_automation folder to target machine
       copy:
         src: ./analysis_automation
         dest: /automate/analysis_automation
-        owner: root
-        group: root
+        owner: cape
+        group: cape
         mode: '0755'
 
     - name: Copy automate_report_evasive_nonevasive folder to target machine
       copy:
         src: ./automate_report_evasive_nonevasive
         dest: /automate/automate_report_evasive_nonevasive
-        owner: root
-        group: root
+        owner: cape
+        group: cape
         mode: '0755'
-        
+
     - name: Install qemu-kvm
       become: yes
       apt:
@@ -307,22 +317,22 @@
         executable: pip3
       ignore_errors: yes  # This allows the playbook to continue if the task fails
         
-    # - name: Create CAPE directory
-    #   ansible.builtin.file:
-    #     path: /opt/CAPEv2
-    #     state: directory
-    #     mode: '0755'
+    - name: Create CAPE directory
+      ansible.builtin.file:
+        path: /opt/CAPEv2
+        state: directory
+        mode: '0755'
 #  The part for CAPE related install
-    - name: Add CAPE directory as a safe Git directory
-      command: git config --global --add safe.directory /opt/CAPEv2
+    # - name: Add CAPE directory as a safe Git directory
+    #   command: git config --global --add safe.directory /opt/CAPEv2
 
-    - name: Clone CAPE repository
-      git:
-        repo: https://github.com/kevoreilly/CAPEv2.git
-        dest: /opt/CAPEv2
-        version: fa94c917659a24a412ae793a54e2be48e5f15ec7
-        force: no  # Ensure it doesn't overwrite or force changes
-      ignore_errors: yes  # This allows the playbook to continue if the task fails
+    # - name: Clone CAPE repository
+    #   git:
+    #     repo: https://github.com/kevoreilly/CAPEv2.git
+    #     dest: /opt/CAPEv2
+    #     version: fa94c917659a24a412ae793a54e2be48e5f15ec7
+    #     force: no  # Ensure it doesn't overwrite or force changes
+    #   ignore_errors: yes  # This allows the playbook to continue if the task fails
 
 
     - name: Check if CAPEv2 repo already exists
@@ -330,31 +340,33 @@
         path: /opt/CAPEv2/.git
       register: cape_repo_exists
 
-    - name: Skip cloning if repository already exists
-      git:
-        repo: https://github.com/kevoreilly/CAPEv2.git
-        dest: /opt/CAPEv2
-        version: fa94c917659a24a412ae793a54e2be48e5f15ec7
-      when: not cape_repo_exists.stat.exists
-      ignore_errors: yes
-
-    - name: Install CAPE dependencies
-      pip:
-        requirements: /opt/CAPEv2/requirements.txt
-      ignore_errors: yes
-
+    # - name: Skip cloning if repository already exists
+    #   git:
+    #     repo: https://github.com/kevoreilly/CAPEv2.git
+    #     dest: /opt/CAPEv2
+    #     version: fa94c917659a24a412ae793a54e2be48e5f15ec7
+    #   when: not cape_repo_exists.stat.exists
+    #   ignore_errors: yes
     - name: Copy CAPE installation script from local to remote
       copy:
         src: ./cape2.sh
         dest: /opt/CAPEv2/cape2.sh
         mode: '0755'
 
-    - name: Pre-configure debconf for wireshark-common
-      debconf:
-        name: "wireshark-common"
-        question: "wireshark-common/install-setuid"
-        value: "true"
-        vtype: "boolean"
+    - name: Change ownership of /opt/CAPEv2 to user cape and group cape
+      file:
+        path: /opt/CAPEv2
+        state: directory
+        recurse: yes
+        owner: cape
+        group: cape
+
+    # - name: Pre-configure debconf for wireshark-common
+    #   debconf:
+    #     name: "wireshark-common"
+    #     question: "wireshark-common/install-setuid"
+    #     value: "true"
+    #     vtype: "boolean"
         
     - name: Run CAPE installation script after releasing lock
       shell: |
@@ -365,14 +377,10 @@
       delay: 30
       until: cape_install_output.rc == 0
   
-
-    - name: Change ownership of /opt/CAPEv2 to user cape and group cape
-      file:
-        path: /opt/CAPEv2
-        state: directory
-        recurse: yes
-        owner: cape
-        group: cape
+    - name: Install CAPE dependencies
+      pip:
+        requirements: /opt/CAPEv2/requirements.txt
+      ignore_errors: yes
 
     - name: Debug CAPE installation output
       debug:
@@ -473,7 +481,59 @@
       become_user: cape
       # no_log: true  # hides the password and other sensitive info in the output
 
+    # - name: Start automation script for 2nd analysis submission
+    - name: Install CAPE dependencies
+      pip:
+        requirements: /automate/analysis_automation/requirements.txt
+      ignore_errors: yes
+
+    - name: make cape automate file submission installer directory
+      ansible.builtin.file:
+        path: /home/cape/automation
+        state: directory
+        mode: '0777'
+
+    - name: Run systemd_setup.sh script to automate
+      shell: ./systemd_setup.sh
+      become: yes
+      args:
+        chdir: /automate/analysis_automation
+      
+    - name: Install pdfplumber for automated 2nd analysis
+      shell:  pip3 install pdfplumb er
+      become: yes
+
+    - name: copy report_monitor.service from local to remote
+      copy:
+        src: ./report_monitor.service
+        dest: /etc/systemd/system/report_monitor.service
+        mode: '0777'
+
+    - name: Create /latest directory
+      file:
+        path: /opt/CAPEv2/storage/analyses/latest
+        state: directory
+        mode: '0755'
+        owner: cape
+        group: cape
     
+    - name: Create /report directory
+      file:
+        path: /opt/CAPEv2/storage/analyses/latest/reports
+        state: directory
+        mode: '0755'
+        owner: cape
+        group: cape
+
+    - name: Enable Persistence monitoring automated 2nd analysis
+      shell:  systemctl enable report_monitor
+      become: yes
+      ignore_errors: yes
+
+    - name: Run Persistence monitoring automated 2nd analysis
+      shell:  systemctl start report_monitor
+      become: yes
+      ignore_errors: yes
 
 # Cleanup
     - name: Remove useless packages from the cache

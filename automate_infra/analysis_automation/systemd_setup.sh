@@ -1,6 +1,6 @@
 #!/bin/bash
 
-script_path="/home/cape/Config_scripts/Sandbox_ITP/py_scripts/observer.py"
+script_path="/automation/analysis_automation/observer.py"
 service_name="cape-scheduler"
 user="${user:-$(whoami)}"
 group="${group:-$(id -gn)}"

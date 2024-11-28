@@ -10,3 +10,6 @@ terraform/*.tfstate.backup
 .terraform/
 automate_infra/system_api_token.txt
 automate_infra/user_api_token.txt
+automate_infra/win10-main-analysis-vm.7z
+terraform/.terraform.tfstate.lock.info
+Testware_Binaries/wmi-mal-v3/wmi-mal.exe
