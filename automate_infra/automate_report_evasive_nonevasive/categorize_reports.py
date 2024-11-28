@@ -1,4 +1,4 @@
-import pdfplumber
+import json
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
@@ -9,8 +9,8 @@ class ReportHandler(FileSystemEventHandler):
         self.keywords = keywords
 
     def on_created(self, event):
-        # Check if the new file is a PDF
-        if event.is_directory or not event.src_path.endswith(".pdf"):
+        # Check if the new file is a json file
+        if event.is_directory or not event.src_path.endswith(".json"):
             return
         file_path = event.src_path
         category = self.categorize_report(file_path)
@@ -19,16 +19,34 @@ class ReportHandler(FileSystemEventHandler):
     def categorize_report(self, file_path):
         category = "Non-evasive"
         try:
-            with pdfplumber.open(file_path) as pdf:
-                for page in pdf.pages:
-                    text = page.extract_text()
-                    if text:
-                        for keyword in self.keywords:
-                            if keyword in text:
-                                category = "Evasive"
-                                break
-                    if category == "Evasive":
-                        break
+            # Open and read the JSON file
+   
+            f = open(file_path)
+
+            data = json.load(f)
+            list_of_indicators = data['target']['file']['yara']
+        
+            indicator_count = 0
+            for elem in list_of_indicators:
+                for keyword in self.keywords:
+                    if keyword in elem["name"]: 
+                        indicator_count+=1
+
+            print(indicator_count)
+            if indicator_count >= 1:
+                category = "Evasive"
+                        
+            # with pdfplumber.open(file_path) as pdf:
+            #     for page in pdf.pages:
+            #         text = page.extract_text()
+            #         if text:
+            #             for keyword in self.keywords:
+            #                 if keyword in text:
+            #                     category = "Evasive"
+            #                     break
+            #         if category == "Evasive":
+            #             break
+            f.close()
         except Exception as e:
             print(f"An error occurred while processing {file_path}: {e}")
         return category
@@ -40,7 +58,7 @@ evasive_keywords = [
 ]
 
 # Set up the observer to monitor the CAPE reports directory
-path_to_watch = "/opt/CAPEv2/storage/analyses/latest/reports"
+path_to_watch = "/home/cape/reports_dir"
 if not os.path.exists(path_to_watch):
     print(f"Error: Path '{path_to_watch}' does not exist. Check the directory location.")
     exit(1)
