@@ -20,8 +20,10 @@ class ReportHandler(FileSystemEventHandler):
         category = "Non-evasive"
         try:
             # Open and read the JSON file
-            with open(file_path, 'r') as f:
-                data = json.load(f)
+   
+            f = open(file_path)
+
+            data = json.load(f)
             list_of_indicators = data['target']['file']['yara']
         
             indicator_count = 0
@@ -44,6 +46,7 @@ class ReportHandler(FileSystemEventHandler):
             #                     break
             #         if category == "Evasive":
             #             break
+            f.close()
         except Exception as e:
             print(f"An error occurred while processing {file_path}: {e}")
         return category
