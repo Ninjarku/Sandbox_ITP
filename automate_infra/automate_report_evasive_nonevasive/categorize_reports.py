@@ -23,9 +23,9 @@ class ReportHandler(FileSystemEventHandler):
    
             f = open(file_path)
 
-            data = json.load(f)
+            data = json.loads(f,'r')
             list_of_indicators = data['target']['file']['yara']
-        
+            f.close()
             indicator_count = 0
             for elem in list_of_indicators:
                 for keyword in self.keywords:
@@ -46,7 +46,7 @@ class ReportHandler(FileSystemEventHandler):
             #                     break
             #         if category == "Evasive":
             #             break
-            f.close()
+            
         except Exception as e:
             print(f"An error occurred while processing {file_path}: {e}")
         return category
