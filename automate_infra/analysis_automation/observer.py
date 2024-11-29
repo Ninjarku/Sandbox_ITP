@@ -132,9 +132,8 @@ class Scheduler:
         self.url = "http://localhost:8000/apiv2/tasks/create/file/"
     
     def schedule_analysis(self, filepath):
-        file = {'file': open(filepath, 'rb')}
+        file = {'file': (filepath,open(filepath, 'rb'))}
         data = {
-            'file':file,
             'timeout':900,
             'machine':'win10-main-analysis-vm', 
             'options':'bp0=ep'
