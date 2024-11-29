@@ -21,11 +21,13 @@ class ReportHandler(FileSystemEventHandler):
         try:
             # Open and read the JSON file
    
-            f = open(file_path)
+            with open(file_path, 'r') as file:
+                data = file.read()
 
-            data = json.loads(f)
-            list_of_indicators = data['target']['file']['yara']
-            f.close()
+            parsed_data = json.loads(data)
+            
+            list_of_indicators = parsed_data['target']['file']['yara']
+            
             indicator_count = 0
             for elem in list_of_indicators:
                 for keyword in self.keywords:
@@ -59,6 +61,8 @@ evasive_keywords = [
 
 # Set up the observer to monitor the CAPE reports directory
 path_to_watch = "/home/cape/reports_dir"
+#path_to_watch = "./test_dir"
+
 if not os.path.exists(path_to_watch):
     print(f"Error: Path '{path_to_watch}' does not exist. Check the directory location.")
     exit(1)

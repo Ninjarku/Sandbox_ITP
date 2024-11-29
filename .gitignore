@@ -1,6 +1,7 @@
 
 automate_infra/inventory.ini
 automate_infra/automate_report_evasive_nonevasive/test_dir/
+automate_infra/automate_report_evasive_nonevasive/read_json.py
 terraform/terraform.tfvars
 
 # Terraform state and backup files in the terraform/ directory
