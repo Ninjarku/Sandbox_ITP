@@ -134,8 +134,9 @@ class Scheduler:
     def schedule_analysis(self, filepath):
         file = {'file': open(filepath, 'rb')}
         data = {
+            'file':file,
             'timeout':900,
-            'machine':'win10clone4', 
+            'machine':'win10-main-analysis-vm', 
             'options':'bp0=ep'
         }
 
