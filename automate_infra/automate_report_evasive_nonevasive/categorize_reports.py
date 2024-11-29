@@ -23,7 +23,7 @@ class ReportHandler(FileSystemEventHandler):
    
             f = open(file_path)
 
-            data = json.loads(f,'r')
+            data = json.loads(f)
             list_of_indicators = data['target']['file']['yara']
             f.close()
             indicator_count = 0
