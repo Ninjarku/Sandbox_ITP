@@ -19,6 +19,7 @@ resource "proxmox_vm_qemu" "cape2" {
   cores             = 2
   memory            = var.vm_memory
   onboot = true
+  agent = 1
   
 
   network {
@@ -32,14 +33,14 @@ resource "proxmox_vm_qemu" "cape2" {
     slot    = "scsi0"
   }
   scsihw    = "virtio-scsi-single"
-
+  
   disk {
     type    = "cloudinit"
     size    = var.vm_disk_size 
     storage = var.vm_disk_location
     slot    = "ide2"
   }
-
+  
   ciuser       = "cape"                           # Set the username
   cipassword   = "cape_pass"                      # Optional: Set a password (use cautiously)
   sshkeys  = file("~/.ssh/id_rsa.pub")

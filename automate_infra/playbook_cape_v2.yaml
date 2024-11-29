@@ -58,21 +58,11 @@
         path: /automate
         state: directory
         mode: '0777'
-    # In case of rerun
-    - name: Remove existing automate_report_evasive_nonevasive directory
-      file:
-        path: /automate/automate_report_evasive_nonevasive
-        state: absent
-
-    - name: Remove existing analysis_automation directory
-      file:
-        path: /automate/analysis_automation
-        state: absent
-
+    
     - name: Copy analysis_automation folder to target machine
       copy:
         src: ./analysis_automation
-        dest: /automate/analysis_automation
+        dest: /automate
         owner: cape
         group: cape
         mode: '0755'
@@ -80,7 +70,7 @@
     - name: Copy automate_report_evasive_nonevasive folder to target machine
       copy:
         src: ./automate_report_evasive_nonevasive
-        dest: /automate/automate_report_evasive_nonevasive
+        dest: /automate
         owner: cape
         group: cape
         mode: '0755'
@@ -287,7 +277,7 @@
   hosts: cape
   become: yes
   tasks:
-    - name: Update and install dependencies for git
+    - name: Update and install git
       apt:
         name: git
         state: present
@@ -347,6 +337,13 @@
     #     version: fa94c917659a24a412ae793a54e2be48e5f15ec7
     #   when: not cape_repo_exists.stat.exists
     #   ignore_errors: yes
+    - name: Skip cloning if repository already exists
+      git:
+        repo: https://github.com/Cassandra-Fu/CAPE_SIT_EDITION
+        dest: /opt/CAPEv2
+        version: new_main
+      when: not cape_repo_exists.stat.exists
+      ignore_errors: yes
     - name: Copy CAPE installation script from local to remote
       copy:
         src: ./cape2.sh
@@ -467,18 +464,18 @@
         chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
 
 # Create super user in cape
-    - name: Run createsuperuser command with automated responses
-      expect:
-        command: python3 /opt/CAPEv2/web/manage.py createsuperuser
-        chdir: /opt/CAPEv2/web
-        responses:
-          "Username": "cape\n"
-          "Email address": "cape@example.com\n"
-          "Password": "cape_pass\n"
-          "Password (again)": "cape_pass\n"
-      ignore_errors: yes
-      become: yes
-      become_user: cape
+    # - name: Run createsuperuser command with automated responses
+    #   expect:
+    #     command: python3 /opt/CAPEv2/web/manage.py createsuperuser
+    #     chdir: /opt/CAPEv2/web
+    #     responses:
+    #       "Username": "cape\n"
+    #       "Email address": "cape@example.com\n"
+    #       "Password": "cape_pass\n"
+    #       "Password (again)": "cape_pass\n"
+    #   ignore_errors: yes
+    #   become: yes
+    #   become_user: cape
       # no_log: true  # hides the password and other sensitive info in the output
 
     # - name: Start automation script for 2nd analysis submission
@@ -500,7 +497,7 @@
         chdir: /automate/analysis_automation
       
     - name: Install pdfplumber for automated 2nd analysis
-      shell:  pip3 install pdfplumb er
+      shell:  pip3 install pdfplumber
       become: yes
 
     - name: copy report_monitor.service from local to remote
