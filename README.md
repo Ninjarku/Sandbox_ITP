@@ -74,8 +74,8 @@ vm_memory = 12288
 ```
 There are more vairables that can be configured with this, but these are the main ones to change for this to work.
 
-## Create qcow
-Create a qcow file with the documentation in this git: `Create QCOW.pdf`, then 7zip it and put it in the `Sandbox_ITP\automate_infra` directory with the zip name  `win10-main-analysis-vm.7z`
+## Create a new .qcow disk image file
+Create a .qcow file with the documentation in this git: `Create NewDiskImage.pdf`, then 7zip it and put it in the `Sandbox_ITP\automate_infra` directory with the zip name  `win10-main-analysis-vm.7z`
 
 ## Run init.sh
 Once you have completed the above steps, you are ready to initialise terraform to create the machines.
