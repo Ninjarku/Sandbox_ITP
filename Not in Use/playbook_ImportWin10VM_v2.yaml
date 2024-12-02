@@ -1,0 +1,32 @@
+- name: Imports VM from local image file
+  hosts: localhost
+  become: yes
+  vars:
+    pool_name: default
+    vm_name: win10-main-analysis-vm
+    vcpus: 2
+    vm_memory: 8192
+    cleanup: no
+    net: default
+    vm_os_variant: "win10"
+    vm_network_name: "host-only-network"
+
+
+  tasks:
+    - name: use virt-install to create VM
+      become: yes
+      command: >
+        virt-install
+        --name {{ vm_name }}
+        --vcpus={{vcpus}}
+        --memory {{ vm_memory }}
+        --os-variant {{ vm_os_variant }}
+        --disk /data1/libvirt/images/{{ vm_name }}.qcow2,size=60,bus=virtio,format=qcow2
+        --network network={{ vm_network_name }},model=virtio,mac="52:54:00:48:27:1D"
+        --vnc
+        --import
+
+    - name: use virtsh to create snapshot
+      become: yes
+      shell: >
+        virsh snapshot-create-as {{vm_name}} snapshot2 --description "snapshot2_master"

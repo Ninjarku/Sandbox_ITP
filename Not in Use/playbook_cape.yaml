@@ -1,0 +1,376 @@
+---
+#  Be sure to create a inventory.ini with [cape] and an IP for the cape server  
+# You need to install sshpass - 
+#  ansible-playbook -i inventory.ini playbook_cape.yaml --ask-become-pass
+- name: CAPE Deployment
+  hosts: cape
+  become: yes
+  tasks:
+    - name: Update and install dependencies for git
+      apt:
+        name: git
+        state: present
+        force_apt_get: yes
+
+    - name: Add deadsnakes PPA for newer Python versions
+      apt_repository:
+        repo: ppa:deadsnakes/ppa
+        state: present
+        update_cache: yes
+        
+    # - name: Add MongoDB GPG key
+    #   apt_key:
+    #     url: https://www.mongodb.org/static/pgp/server-7.0.asc
+    #     state: present
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+
+    - name: Install Python 3
+      apt:
+        name: python3
+        state: present
+
+    - name: Ensure Python 3 pip is installed
+      apt:
+        name: python3-pip
+        state: present
+        force_apt_get: yes 
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+    - name: Find the process holding the lock on /var/lib/dpkg/lock-frontend
+      shell: lsof -t /var/lib/dpkg/lock-frontend
+      register: lock_holder_pid
+      ignore_errors: yes  # In case there’s no process holding the lock
+      failed_when: lock_holder_pid.rc != 0 and lock_holder_pid.stdout != ""  # Only fail if there's output with a non-zero return code
+
+    - name: Kill the lock holder process
+      shell: kill -9 {{ lock_holder_pid.stdout }}
+      when: lock_holder_pid.stdout is defined and lock_holder_pid.stdout != ""
+      ignore_errors: yes
+
+    - name: Install python3.10
+      shell: yes "y" | sudo apt install python3.10 python3.10-venv python3.10-dev
+      ignore_errors: yes
+    
+    # - name: Update and install dependencies for python3
+    #   apt:
+    #     name: python3.10
+    #     state: present
+    #     force_apt_get: yes        
+    
+    # - name: Update and install dependencies for poetry
+    #   apt:
+    #     name: poetry
+    #     state: present
+    #     force_apt_get: yes  
+    - name: Ensure pip is installed
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+    - name: Install Poetry using pip
+      pip:
+        name: poetry
+        executable: pip3
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+        
+
+#  The part for CAPE related install
+    - name: Add CAPE directory as a safe Git directory
+      command: git config --global --add safe.directory /opt/CAPEv2
+
+    - name: Clone CAPE repository
+      git:
+        repo: https://github.com/kevoreilly/CAPEv2.git
+        dest: /opt/CAPEv2
+        version: fa94c917659a24a412ae793a54e2be48e5f15ec7
+        force: no  # Ensure it doesn't overwrite or force changes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+
+    - name: Check if CAPEv2 repo already exists
+      stat:
+        path: /opt/CAPEv2/.git
+      register: cape_repo_exists
+
+    - name: Skip cloning if repository already exists
+      git:
+        repo: https://github.com/kevoreilly/CAPEv2.git
+        dest: /opt/CAPEv2
+        version: fa94c917659a24a412ae793a54e2be48e5f15ec7
+      when: not cape_repo_exists.stat.exists
+      ignore_errors: yes
+
+    - name: Install CAPE dependencies
+      pip:
+        requirements: /opt/CAPEv2/requirements.txt
+      ignore_errors: yes
+
+    - name: Change to capesandbox directory
+      command: chdir=/opt/CAPEv2 /bin/true 
+
+    # Download the cape script and run
+    # - name: Download CAPE installation script
+    #   get_url:
+    #     url: https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/installer/cape2.sh
+    #     dest: /opt/capesandbox/cape2.sh
+    #     mode: '0755'
+
+    - name: Copy CAPE installation script from local to remote
+      copy:
+        src: ./cape2.sh
+        dest: /opt/CAPEv2/cape2.sh
+        mode: '0755'
+
+    - name: Pre-configure debconf for wireshark-common
+      debconf:
+        name: "wireshark-common"
+        question: "wireshark-common/install-setuid"
+        value: "true"
+        vtype: "boolean"
+        
+    - name: Find the process holding the lock on /var/lib/dpkg/lock-frontend
+      shell: lsof -t /var/lib/dpkg/lock-frontend
+      register: lock_holder_pid
+      ignore_errors: yes  # In case there’s no process holding the lock
+      failed_when: lock_holder_pid.rc != 0 and lock_holder_pid.stdout != ""  # Only fail if there's output with a non-zero return code
+       
+    - name: Kill the lock holder process
+      shell: kill -9 {{ lock_holder_pid.stdout }}
+      when: lock_holder_pid.stdout is defined and lock_holder_pid.stdout != ""
+      ignore_errors: yes
+    
+
+    - name: Run CAPE installation script after releasing lock
+      shell: |
+          DEBIAN_FRONTEND=noninteractive yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
+      become: yes
+      register: cape_install_output
+      retries: 5
+      delay: 30
+      until: cape_install_output.rc == 0
+  
+
+    - name: Change ownership of /opt/CAPEv2 to user cape and group cape
+      file:
+        path: /opt/CAPEv2
+        state: directory
+        recurse: yes
+        owner: cape
+        group: cape
+
+    - name: Debug CAPE installation output
+      debug:
+        var: cape_install_output
+# Copy our updated Config scripts from https://github.com/Cassandra-Fu/CAPE_SIT_EDITION
+    - name: Replace cuckoo.conf file with our updated one
+      copy:
+          src: ./conf/cuckoo.conf
+          dest: /opt/CAPEv2/cuckoo.conf
+          mode: '0644'
+    
+    - name: Replace auxiliary.conf file with our updated one
+      copy:
+          src: ./conf/auxiliary.conf
+          dest: /opt/CAPEv2/auxiliary.conf
+          mode: '0644'
+
+    - name: Replace reporting.conf file with our updated one
+      copy:
+          src: ./conf/reporting.conf
+          dest: /opt/CAPEv2/reporting.conf
+          mode: '0644'
+
+    - name: Replace routing.conf file with our updated one
+      copy:
+          src: ./conf/routing.conf
+          dest: /opt/CAPEv2/routing.conf
+          mode: '0644'
+
+    - name: Replace web.conf file with our updated one
+      copy:
+          src: ./conf/web.conf
+          dest: /opt/CAPEv2/web.conf
+          mode: '0644'
+    - name: Replace web.conf file with our updated one
+      copy:
+          src: ./conf/cuckoo.conf
+          dest: /opt/CAPEv2/cuckoo.conf
+          mode: '0644'
+
+    - name: Install poetry dependencies in CAPEv2 directory
+      shell: |
+        cd /opt/CAPEv2
+        sudo poetry install
+      args:
+        chdir: /opt/CAPEv2  # Ensures the command is executed in this directory
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+    - name: Add CAPE python path
+      shell: |
+        echo "export PYTHONPATH=/opt/CAPEv2:\$PYTHONPATH" >> ~/.bashrc
+
+    - name: Upgrade pip to the latest version for python3.10
+      shell: |
+        python3.10 -m ensurepip --upgrade
+        python3.10 -m pip install --upgrade pip
+      become: yes
+
+    - name: Create virtual environment with Python 3.10
+      shell: |
+        python3.10 -m venv /opt/CAPEv2/venv
+      become: yes
+
+    - name: Activate virtual environment and install Poetry and dependencies
+      shell: |
+        source /opt/CAPEv2/venv/bin/activate
+        pip install --upgrade pip
+    
+        # Ensure Poetry is installed in the virtual environment
+        pip install poetry
+    
+        # Check and remove distutils installed packages that cause uninstall issues
+        apt-get -y remove python3-pexpect python3-yaml || true
+    
+        # Re-install required packages within the virtual environment
+        cd /opt/CAPEv2
+        poetry env use /opt/CAPEv2/venv/bin/python3.10
+        poetry install
+    
+        # Install additional dependencies from requirements.txt
+        pip install -r /opt/CAPEv2/requirements.txt --root-user-action=ignore
+        export PYTHONPATH=/opt/CAPEv2/lib:$PYTHONPATH
+      args:
+        executable: /bin/bash
+      become: yes
+
+    - name: Set Poetry to use Python 3.10 in CAPE directory
+      shell: |
+        /opt/CAPEv2/venv/bin/poetry env use /opt/CAPEv2/venv/bin/python3.10
+      args:
+        chdir: /opt/CAPEv2
+      become: yes
+      become_user: cape
+
+    - name: Install CAPE dependencies with Poetry in Python 3.10 environment
+      shell: |
+        /opt/CAPEv2/venv/bin/poetry install
+      args:
+        chdir: /opt/CAPEv2
+      become: yes
+      become_user: cape
+
+        
+    - name: Install CAPE python requirements in CAPEv2 directory
+      shell: |
+        python3.10 -m pip install -r /opt/CAPEv2/requirements.txt || true
+      args:
+        chdir: /opt/CAPEv2  # Ensures the command is executed in this directory
+      register: requirements_output
+      become: yes
+    
+    
+    - name: Check if there were any errors in installing CAPE requirements
+      fail:
+        msg: "There was an issue with the installation of CAPE's Python requirements."
+      when: requirements_output.rc != 0 and "'distutils' not in requirements_output.stdout"
+
+
+    - name: INSTALL FLARE Signatures
+      shell: |
+        cd /opt/CAPEv2/utils
+        sudo python3.10  /opt/CAPEv2/utils/community.py -cr 
+      args:
+        chdir: /opt/CAPEv2/utils  # Ensures the command is executed in this directory
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+    # - name: Install dependencies
+    #   shell: |
+    #      pip install -r /opt/CAPEv2/requirements.txt
+    #   ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+
+    - name: Run Django migrations for CAPE as the cape user
+      shell: |
+        source /opt/CAPEv2/venv/bin/activate
+        export PYTHONPATH="/opt/CAPEv2/lib:$PYTHONPATH"
+        python3.10 manage.py migrate
+      become: yes
+      become_user: cape  # Run as the non-root cape user (adjust if needed)
+      args:
+        chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
+        executable: /bin/bash  # Specifies to use bash for the shell task
+
+# Create super user in cape
+    - name: Run createsuperuser command with automated responses
+      expect:
+        command: "bash -c 'source /opt/CAPEv2/venv/bin/activate && python3.10 /opt/CAPEv2/web/manage.py createsuperuser'"
+        chdir: /opt/CAPEv2/web
+        responses:
+          "Username": "cape\n"
+          "Email address": "cape@example.com\n"
+          "Password": "cape_pass\n"
+          "Password (again)": "cape_pass\n"
+      ignore_errors: yes
+      become: yes
+      become_user: cape
+
+      # no_log: true  # hides the password and other sensitive info in the output
+
+
+    - name: Generate API token
+      shell: |
+        source /opt/CAPEv2/venv/bin/activate
+        python3.10 /opt/CAPEv2/web/manage.py drf_create_token cape
+      args:
+        chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
+      register: command_output
+  
+    - name: Extract token from command output
+      set_fact:
+        extracted_token: "{{ command_output.stdout | regex_search('generated token (.*) for user cape') | regex_replace('generated token ', '') }}"
+  
+    - name: Save extracted token to a file on the remote host
+      copy:
+        content: "{{ extracted_token }}"
+        dest: "/tmp/extracted_token.txt"
+  
+    - name: Fetch the extracted token file to the local machine
+      fetch:
+        src: "/tmp/extracted_token.txt"
+        dest: "./local_extracted_token.txt"
+        flat: yes
+    
+    - name: Install Missing flare-floss dependencies
+      shell: |
+        poetry run pip install -U flare-floss
+
+    # - name: Reinstall Mongo db 4.4
+    #   shell: |
+    #     sudo service mongod stop
+    #     sudo apt-get purge mongodb-org*
+    #     sudo rm -r /var/log/mongodb
+    #     sudo rm -r /var/lib/mongodb
+
+    #     echo "deb http://security.ubuntu.com/ubuntu focal-security main" | sudo tee /etc/apt/sources.list.d/focal-security.list
+    #     sudo apt-get install libssl1.1
+    #     wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+    #     echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+    #     sudo apt-get update
+    #     sudo apt-get install -y mongodb-org=4.4.15 mongodb-org-server=4.4.15 mongodb-org-shell=4.4.15 mongodb-org-mongos=4.4.15 mongodb-org-tools=4.4.15
+
+# Cleanup
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
+
