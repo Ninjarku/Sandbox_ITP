@@ -1,0 +1,57 @@
+- name: Imports VM from local image file
+  hosts: localhost
+  become: yes
+  vars:
+    pool_name: default
+    vm_name: win10-main-analysis-vm
+    vcpus: 2
+    vm_memory: 8192
+    cleanup: no
+    net: default
+    ssh_pub_key: "/root/.ssh/id_rsa.pub"
+    qcow2_location: "/home/cape/libvirt/images"
+    vm_os_variant: "win10"
+    vm_network_bridge: "virbr1"
+
+  tasks:
+    - name: Create a directory to store .qcow2 file if it does not exist
+      file:
+          path: ~/libvirt/images
+          state: directory
+          mode: '0755'
+
+    # - name: create a copy of the qcow2 image
+    #   copy:
+    #     src: "{{ qcow2_location }}/{{ qcow2.name }}"
+    #     dest: "{{ IMAGE }}"
+    #     remote_src: yes
+
+    # - name: Install KVM and related packages on Ubuntu
+    #   apt: name={{ item }} state=present update_cache=true allow_unauthenticated=true
+    #   loop: [qemu-kvm, libvirt-daemon-system, libvirt-clients, bridge-utils, virt-manager, virt-viewer]
+
+    # - name: inject ssh key w/ virt-customize
+    #   command: >
+    #     virt-customize
+    #     --add {{ IMAGE }}
+    #     --ssh-inject root:string:"{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    #     --run-command 'chcon -R unconfined_u:object_r:ssh_home_t:s0 /root/.ssh/'
+    # #    --selinux-relabel
+
+    - name: use virt-install to create VM
+      become: yes
+      command: >
+        virt-install
+        --name {{ vm_name }}
+        --vcpus={{vcpus}}
+        --memory {{ vm_memory }}
+        --os-variant {{ vm_os_variant }}
+        --disk /data1/libvirt/images/{{ vm_name }}.qcow2,size=60,bus=virtio,format=qcow2
+        --network bridge={{ vm_network_bridge }},model=virtio
+        --vnc
+        --import
+
+    - name: use virtsh to create snapshot
+      become: yes
+      shell: >
+        virsh snapshot-create-as {{vm_name}} snapshot0 --description "snapshot0_master"

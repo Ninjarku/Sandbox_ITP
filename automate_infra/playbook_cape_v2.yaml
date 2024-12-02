@@ -1,0 +1,542 @@
+---
+#  Be sure to create a inventory.ini with [cape] and an IP for the cape server  
+#  e.g. <CAPE IP> ansible_user=<CAPE USERNAME> ansible_become=true ansible_ssh_private_key_file=~/.ssh/id_rsa 
+#  ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini --private-key ~/.ssh/id_rsa --become playbook_cape_v2.yaml
+- name: Imports VM from local image file and install windows kvm
+  hosts: cape
+  become: yes
+  vars:
+    pool_name: default
+    vm_name: win10-main-analysis-vm
+    vcpus: 2
+    vm_memory: 8192
+    cleanup: no
+    net: default
+    vm_os_variant: "win10"
+    vm_network_name: "host-only-network"
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+    # Install GUI for Ubuntu
+
+    - name: Find the process holding the lock on /var/lib/dpkg/lock-frontend
+      shell: lsof -t /var/lib/dpkg/lock-frontend
+      register: lock_holder_pid
+      ignore_errors: yes  # In case there’s no process holding the lock
+      failed_when: lock_holder_pid.rc != 0 and lock_holder_pid.stdout != ""  # Only fail if there's output with a non-zero return code
+
+    - name: Kill the lock holder process
+      shell: kill -9 {{ lock_holder_pid.stdout }}
+      when: lock_holder_pid.stdout is defined and lock_holder_pid.stdout != ""
+      ignore_errors: yes
+
+      
+    - name: Preconfigure debconf for slim as default display manager
+      debconf:
+        name: "slim"
+        question: "shared/default-x-display-manager"
+        value: "slim"
+        vtype: "select"
+
+    - name: Install slim display manager
+      shell: yes "y" | apt-get install -y slim
+      ignore_errors: yes
+
+    - name: Install ubuntu-desktop-minimal with slim preselected
+      shell: DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop-minimal
+      ignore_errors: yes
+
+    - name: Start slim display manager
+      shell: service slim start
+      ignore_errors: yes
+
+    - name: Create /automate directory
+      file:
+        path: /automate
+        state: directory
+        mode: '0777'
+    
+    - name: Copy analysis_automation folder to target machine
+      copy:
+        src: ./analysis_automation
+        dest: /automate
+        owner: cape
+        group: cape
+        mode: '0755'
+
+    - name: Copy automate_report_evasive_nonevasive folder to target machine
+      copy:
+        src: ./automate_report_evasive_nonevasive
+        dest: /automate
+        owner: cape
+        group: cape
+        mode: '0755'
+
+    - name: Install qemu-kvm
+      become: yes
+      apt:
+        name: qemu-kvm
+        state: present
+        force_apt_get: yes
+    
+    - name: Install required packages
+      apt:
+        name:
+          - git
+          - build-essential
+          - cmake
+          - ninja-build
+          - python3-dev
+          - cython3
+          - pybind11-dev
+          - python3-pip
+          - libre2-dev
+          - acpica-tools
+          - net-tools
+          - gperf
+          - dbus-x11
+        state: present
+        update_cache: yes
+
+    - name: make kvm installer directory
+      ansible.builtin.file:
+        path: /kvm_installer
+        state: directory
+        mode: '0777'
+        
+    - name: copy kvm installer from local to remote
+      copy:
+        src: ./kvm-qemu.sh
+        dest: /kvm_installer/kvm-qemu.sh
+        mode: '0777'
+
+    - name: Dump ACPI data to file
+      shell: acpidump > /kvm_installer/acpidump.out
+      become: yes
+
+    - name: Extract ACPI tables from the dump
+      shell: acpixtract -a /kvm_installer/acpidump.out
+      become: yes
+      args:
+        chdir: /kvm_installer/
+    
+    - name: Run iasl command and capture output
+      shell: iasl -d dsdt.dat
+      become: yes
+      register: iasl_output
+      args:
+        chdir: /kvm_installer
+
+
+    - name: Extract ACPI identifier from output
+      set_fact:
+        acpi_identifier: "{{ (iasl_output.stderr | regex_search('ACPI:.*BOCHS\\s+(\\w+)\\s', '\\1')) | first }}"
+
+    - name: Debug extracted ACPI identifier
+      debug:
+        msg: "Extracted ACPI identifier: {{ acpi_identifier }}"
+
+
+    - name: Input the hardware data value for kvm-qemu.sh
+      shell: sed -i 's/<WOOT>/{{acpi_identifier}}}/g' kvm-qemu.sh
+      become: yes
+      register: iasl_output
+      args:
+        chdir: /kvm_installer
+
+    - name: Install kvm
+      shell: ./kvm-qemu.sh all cape | tee kvm-qemu.log
+      become: yes
+      register: kvm_install_status
+      args:
+        chdir: /kvm_installer
+
+    - name: Install virt manager
+      shell: ./kvm-qemu.sh Virtmanager cape | tee kvm-qemu-virtmanager.log
+      become: yes
+      args:
+        chdir: /kvm_installer
+
+    - name: Install libvirt drivers
+      shell: ./kvm-qemu.sh Libvirt cape | tee kvm-qemu-libvirt.log
+      become: yes
+      args:
+        chdir: /kvm_installer
+
+    - name: Reboot the remote machine
+      ansible.builtin.reboot:
+        reboot_timeout: 600  # Adjust the timeout as needed
+      register: reboot_status
+      
+    - name: Wait for SSH to become available
+      wait_for:
+        host: "{{ inventory_hostname }}"
+        port: 22
+        delay: 10
+        timeout: 300  # Adjust the timeout as needed
+        state: started
+        search_regex: OpenSSH
+      register: ssh_status
+
+    - name: Debug reboot and SSH wait status
+      debug:
+        msg:
+          - "Reboot status: {{ reboot_status }}"
+          - "SSH wait status: {{ ssh_status }}"
+
+    - name: Create a directory to store .qcow2 file if it does not exist
+      become: yes
+      file:
+          path: /data1/libvirt/images/
+          state: directory
+          mode: '0766'
+    
+    - name: Create the new default storage pool
+      become: yes
+      command: "{{ item }}"
+      loop:
+        - virsh pool-define-as default dir --target "/data1/libvirt/images"
+        - virsh pool-build default
+        - virsh pool-start default
+        - virsh pool-autostart default
+      ignore_errors: yes
+      
+    #  7zz x win10-main-analysis-vm.7z
+    - name: Copy windows analysis vm 7zip file from local to remote
+      copy:
+        src: ./win10-main-analysis-vm.7z
+        dest: /tmp/win10-main-analysis-vm.7z
+        mode: '0777'
+
+    - name: Install 7zip
+      apt:
+        name: 7zip
+        state: present
+        force_apt_get: yes 
+        
+    - name: Extract Windows 10 VM with 7-Zip
+      shell: 7zz x win10-main-analysis-vm.7z
+      args:
+        chdir: /tmp
+
+    - name: Move Disk image file to storage pool
+      become: yes
+      shell: >
+        rsync -ah --progress --remove-source-files /tmp/win10-main-analysis-vm.qcow2 /data1/libvirt/images/win10-main-analysis-vm.qcow2
+
+
+    - name: Copy network_internal.xml from local to remote
+      copy:
+        src: ./network_internal.xml
+        dest: /tmp/network_internal.xml
+        mode: '0755'
+      
+
+    - name: Create the new host-only internal network
+      become: yes
+      shell: |
+        virsh net-define /tmp/network_internal.xml
+        virsh net-autostart {{vm_network_name}}
+        virsh net-start {{vm_network_name}}
+      args:
+        chdir: /tmp
+
+    - name: install virt viewer
+      become: yes
+      apt:
+        name: virt-viewer
+        state: present
+        force_apt_get: yes
+
+  # Create the win10
+    - name: use virt-install to create VM
+      become: yes
+      command: >
+        virt-install
+        --name {{ vm_name }}
+        --vcpus={{vcpus}}
+        --memory {{ vm_memory }}
+        --os-variant {{ vm_os_variant }}
+        --disk /data1/libvirt/images/{{ vm_name }}.qcow2,size=60,bus=virtio,format=qcow2
+        --network network={{ vm_network_name }},model=virtio,mac="52:54:00:48:27:1D"
+        --vnc
+        --import
+        --check path_in_use=off
+        --check mac_in_use=off
+        --wait 0
+
+    - name: use virtsh to create snapshot
+      become: yes
+      shell: >
+        virsh snapshot-create-as {{vm_name}} snapshot2 --description "snapshot2_master"
+
+- name: CAPE Deployment
+  hosts: cape
+  become: yes
+  tasks:
+    - name: Update and install git
+      apt:
+        name: git
+        state: present
+        force_apt_get: yes
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+
+    - name: Install Python 3
+      apt:
+        name: python3
+        state: present
+
+    - name: Ensure Python 3 pip is installed
+      apt:
+        name: python3-pip
+        state: present
+        force_apt_get: yes 
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+    - name: Install Poetry using pip
+      pip:
+        name: poetry
+        executable: pip3
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+        
+    - name: Create CAPE directory
+      ansible.builtin.file:
+        path: /opt/CAPEv2
+        state: directory
+        mode: '0755'
+#  The part for CAPE related install
+    # - name: Add CAPE directory as a safe Git directory
+    #   command: git config --global --add safe.directory /opt/CAPEv2
+
+    # - name: Clone CAPE repository
+    #   git:
+    #     repo: https://github.com/kevoreilly/CAPEv2.git
+    #     dest: /opt/CAPEv2
+    #     version: fa94c917659a24a412ae793a54e2be48e5f15ec7
+    #     force: no  # Ensure it doesn't overwrite or force changes
+    #   ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+
+    - name: Check if CAPEv2 repo already exists
+      stat:
+        path: /opt/CAPEv2/.git
+      register: cape_repo_exists
+
+    # - name: Skip cloning if repository already exists
+    #   git:
+    #     repo: https://github.com/kevoreilly/CAPEv2.git
+    #     dest: /opt/CAPEv2
+    #     version: fa94c917659a24a412ae793a54e2be48e5f15ec7
+    #   when: not cape_repo_exists.stat.exists
+    #   ignore_errors: yes
+    - name: Skip cloning if repository already exists
+      git:
+        repo: https://github.com/Cassandra-Fu/CAPE_SIT_EDITION
+        dest: /opt/CAPEv2
+        version: new_main
+      when: not cape_repo_exists.stat.exists
+      ignore_errors: yes
+    - name: Copy CAPE installation script from local to remote
+      copy:
+        src: ./cape2.sh
+        dest: /opt/CAPEv2/cape2.sh
+        mode: '0755'
+
+    - name: Change ownership of /opt/CAPEv2 to user cape and group cape
+      file:
+        path: /opt/CAPEv2
+        state: directory
+        recurse: yes
+        owner: cape
+        group: cape
+
+    # - name: Pre-configure debconf for wireshark-common
+    #   debconf:
+    #     name: "wireshark-common"
+    #     question: "wireshark-common/install-setuid"
+    #     value: "true"
+    #     vtype: "boolean"
+        
+    - name: Run CAPE installation script after releasing lock
+      shell: |
+          DEBIAN_FRONTEND=noninteractive yes "y" | sudo bash /opt/CAPEv2/cape2.sh base cape
+      become: yes
+      register: cape_install_output
+      retries: 5
+      delay: 30
+      until: cape_install_output.rc == 0
+  
+    - name: Install CAPE dependencies
+      pip:
+        requirements: /opt/CAPEv2/requirements.txt
+      ignore_errors: yes
+
+    - name: Debug CAPE installation output
+      debug:
+        var: cape_install_output
+
+# Copy our updated Config scripts from https://github.com/Cassandra-Fu/CAPE_SIT_EDITION
+    - name: Replace cuckoo.conf file with our updated one
+      copy:
+          src: ./conf/cuckoo.conf
+          dest: /opt/CAPEv2/cuckoo.conf
+          mode: '0644'
+    
+    - name: Replace auxiliary.conf file with our updated one
+      copy:
+          src: ./conf/auxiliary.conf
+          dest: /opt/CAPEv2/auxiliary.conf
+          mode: '0644'
+
+    - name: Replace reporting.conf file with our updated one
+      copy:
+          src: ./conf/reporting.conf
+          dest: /opt/CAPEv2/reporting.conf
+          mode: '0644'
+
+    - name: Replace routing.conf file with our updated one
+      copy:
+          src: ./conf/routing.conf
+          dest: /opt/CAPEv2/routing.conf
+          mode: '0644'
+
+    - name: Replace web.conf file with our updated one
+      copy:
+          src: ./conf/web.conf
+          dest: /opt/CAPEv2/web.conf
+          mode: '0644'
+
+    - name: Replace kvm.conf file with our updated one
+      copy:
+          src: ./conf/kvm.conf
+          dest: /opt/CAPEv2/kvm.conf
+          mode: '0644'
+
+    - name: Replace api.conf file with our updated one
+      copy:
+          src: ./conf/api.conf
+          dest: /opt/CAPEv2/api.conf
+          mode: '0644'
+          
+    - name: Install poetry dependencies in CAPEv2 directory
+      shell: |
+        cd /opt/CAPEv2
+        poetry install
+      args:
+        chdir: /opt/CAPEv2  # Ensures the command is executed in this directory
+      become: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+    - name: Add CAPE python path
+      shell: |
+        echo "export PYTHONPATH=/opt/CAPEv2:\$PYTHONPATH" >> ~/.bashrc
+
+    - name: INSTALL FLARE Signatures
+      shell: |
+        cd /opt/CAPEv2/utils
+        python3 /opt/CAPEv2/utils/community.py -cr
+      args:
+        chdir: /opt/CAPEv2/utils  # Ensures the command is executed in this directory
+      become: yes
+      ignore_errors: yes  # This allows the playbook to continue if the task fails
+
+    - name: Run Django migrations for CAPE as the cape user
+      shell: |
+        python3 manage.py migrate
+      become: yes
+      become_user: cape  # Run as the non-root cape user (adjust if needed)
+      args:
+        chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
+    
+    - name: Install Missing flare-floss dependencies
+      shell: |
+        cd /opt/CAPEv2/web
+        poetry run pip install -U flare-floss
+      args:
+        chdir: /opt/CAPEv2/web  # Ensures the command is executed in this directory
+
+# Create super user in cape
+    # - name: Run createsuperuser command with automated responses
+    #   expect:
+    #     command: python3 /opt/CAPEv2/web/manage.py createsuperuser
+    #     chdir: /opt/CAPEv2/web
+    #     responses:
+    #       "Username": "cape\n"
+    #       "Email address": "cape@example.com\n"
+    #       "Password": "cape_pass\n"
+    #       "Password (again)": "cape_pass\n"
+    #   ignore_errors: yes
+    #   become: yes
+    #   become_user: cape
+      # no_log: true  # hides the password and other sensitive info in the output
+
+    # - name: Start automation script for 2nd analysis submission
+    - name: Install CAPE dependencies
+      pip:
+        requirements: /automate/analysis_automation/requirements.txt
+      ignore_errors: yes
+
+    - name: make cape automate file submission installer directory
+      ansible.builtin.file:
+        path: /home/cape/automation
+        state: directory
+        mode: '0777'
+
+    - name: Run systemd_setup.sh script to automate
+      shell: ./systemd_setup.sh
+      become: yes
+      args:
+        chdir: /automate/analysis_automation
+      
+    - name: Install pdfplumber for automated 2nd analysis
+      shell:  pip3 install pdfplumber
+      become: yes
+
+    - name: copy report_monitor.service from local to remote
+      copy:
+        src: ./report_monitor.service
+        dest: /etc/systemd/system/report_monitor.service
+        mode: '0777'
+
+    - name: Create /latest directory
+      file:
+        path: /opt/CAPEv2/storage/analyses/latest
+        state: directory
+        mode: '0755'
+        owner: cape
+        group: cape
+    
+    - name: Create /report directory
+      file:
+        path: /opt/CAPEv2/storage/analyses/latest/reports
+        state: directory
+        mode: '0755'
+        owner: cape
+        group: cape
+
+    - name: Enable Persistence monitoring automated 2nd analysis
+      shell:  systemctl enable report_monitor
+      become: yes
+      ignore_errors: yes
+
+    - name: Run Persistence monitoring automated 2nd analysis
+      shell:  systemctl start report_monitor
+      become: yes
+      ignore_errors: yes
+
+# Cleanup
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes

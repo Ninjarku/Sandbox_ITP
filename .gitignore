@@ -1,0 +1,17 @@
+
+automate_infra/inventory.ini
+automate_infra/automate_report_evasive_nonevasive/test_dir/
+automate_infra/automate_report_evasive_nonevasive/read_json.py
+terraform/terraform.tfvars
+
+# Terraform state and backup files in the terraform/ directory
+terraform/*.tfstate
+terraform/*.tfstate.backup
+
+# Terraform configuration directory
+.terraform/
+automate_infra/system_api_token.txt
+automate_infra/user_api_token.txt
+automate_infra/win10-main-analysis-vm.7z
+terraform/.terraform.tfstate.lock.info
+Testware_Binaries/wmi-mal-v3/wmi-mal.exe

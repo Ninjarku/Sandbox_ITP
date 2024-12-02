@@ -1,0 +1,38 @@
+- name: Creates A new storage pool and host-only-network
+  hosts: localhost
+  become: yes
+  
+  tasks:
+    - name: Create a directory to store .qcow2 file if it does not exist
+      become: yes
+      # shell: >
+      #   mkdir -p /data1/libvirt/images
+      file:
+          path: /data1/libvirt/images/
+          state: directory
+          mode: '0755'
+    
+    # - name: Change the directory to writable
+    #   become: yes
+    #   shell: >
+    #     chmod +w /data1/libvirt/images
+    - name: Create the new default storage pool
+      become: yes
+      command: "{{ item }}"
+      loop:
+        - virsh pool-define-as default dir --target "/data1/libvirt/images"
+        - virsh pool-build default
+        - virsh pool-start default
+        - virsh pool-autostart default
+      
+    - name: Move Disk image file to storage pool
+      become: yes
+      shell: >
+        rsync -ah --progress --remove-source-files /home/cape/Downloads/win10-main-analysis-vm.qcow2 /data1/libvirt/images/win10-main-analysis-vm.qcow2
+
+    - name: Create the new host-only internal network
+      become: yes
+      shell: |
+        virsh net-define network_internal.xml
+        virsh net-autostart host-only-network
+        virsh net-start host-only-network

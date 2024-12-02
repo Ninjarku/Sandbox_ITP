@@ -1,0 +1,68 @@
+- name: Create and configure a new KVM virtual machine with ISO
+  hosts: localhost
+  become: true
+  gather_facts: false
+  vars:
+    vm_name: "win10_Analysis_vm"
+    vm_memory: 16384  # Assigned 16GB of memory
+    vm_vcpu: 2
+    vm_disk_size: 60G  # Disk size for VM installation
+    vm_image_path: "/var/lib/libvirt/images"
+    vm_disk_path: "{{ vm_image_path }}/{{ vm_name }}.qcow2"
+    iso_path: "/home/cape/Sandbox_ITP/automate_infra/en-us_windows_10_consumer_editions_version_21h2_updated_sep_2022_x64_dvd_bdec96d8.iso"  # Path to your ISO file
+    vm_network_bridge: "virbr1"
+    vm_network_address: "192.168.100.25"  # Set desired IP
+    vm_network_netmask: "255.255.255.0"
+    vm_network_gateway: "192.168.100.1"
+    vm_snapshot_name: "snapshot1"
+
+  tasks:
+    - name: Ensure VM image directory exists
+      file:
+        path: "{{ vm_image_path }}"
+        state: directory
+        mode: '0777'
+
+    # - name: Create a new VM disk
+    #   community.libvirt.libvirt_volume:
+    #     name: "{{ vm_name }}"
+    #     capacity: "{{ vm_disk_size }}"
+    #     format: qcow2
+    #     pool: default
+    #     path: "{{ vm_disk_path }}"
+    #   register: vm_disk
+
+    - name: Define and create a new virtual machine with ISO
+      community.libvirt.libvirt_domain:
+        name: "{{ vm_name }}"
+        memory_mb: "{{ vm_memory }}"
+        vcpu: "{{ vm_vcpu }}"
+        disks:
+          - path: "{{ vm_disk_path }}"  # Primary disk for installation
+          - path: "{{ iso_path }}"       # Attach ISO as CD-ROM for OS installation
+            device: cdrom
+            boot_order: 1
+        networks:
+          - network: "{{ vm_network_bridge }}"
+            type: bridge
+            macvtap: yes
+            ip: "{{ vm_network_address }}"
+            netmask: "{{ vm_network_netmask }}"
+            gateway: "{{ vm_network_gateway }}"
+        state: running
+      register: vm_creation
+
+    - name: Wait for VM to be up
+      wait_for:
+        host: "{{ vm_network_address }}"
+        port: 22
+        timeout: 300
+      when: vm_creation is changed
+
+    - name: Create an initial snapshot for the VM
+      community.libvirt.libvirt_snapshot:
+        name: "{{ vm_snapshot_name }}"
+        domain: "{{ vm_name }}"
+        state: present
+        description: "Initial snapshot of the VM after setup from ISO"
+        persistent: yes
